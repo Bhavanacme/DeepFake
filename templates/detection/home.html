@@ -1,0 +1,466 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- =========================================================================
+     1. HERO SECTION (Dark Navy Hero + Blue Glowing Badges + AI Face Visual)
+     ========================================================================= -->
+<section class="hero-dark-navy position-relative">
+  <div class="container position-relative" style="z-index: 2;">
+    <div class="row align-items-center g-5">
+      
+      <!-- Left Column: Copy & Indicators -->
+      <div class="col-lg-7">
+        <div class="hero-badge-pill">
+          <i class="bi bi-shield-check text-cyan"></i> SAFER DIGITAL WORLD
+        </div>
+
+        <h1 class="hero-heading-main mb-3">
+          AI-Powered<br>
+          <span class="text-gradient-blue">Deepfake Detection</span><br>
+          System
+        </h1>
+
+        <p class="hero-description-text mb-4">
+          Detect manipulated images and videos using advanced deep learning technology. Verify the authenticity of media and stay one step ahead of misinformation.
+        </p>
+
+        <!-- Feature Indicator Badges -->
+        <div class="d-flex flex-wrap gap-2 mb-4">
+          <span class="hero-feature-indicator">
+            <i class="bi bi-check-circle-fill"></i> Accurate Analysis
+          </span>
+          <span class="hero-feature-indicator">
+            <i class="bi bi-lightning-charge-fill"></i> Fast Detection
+          </span>
+          <span class="hero-feature-indicator">
+            <i class="bi bi-lock-fill"></i> Secure & Reliable
+          </span>
+          <span class="hero-feature-indicator">
+            <i class="bi bi-cpu-fill"></i> AI Powered Technology
+          </span>
+        </div>
+
+        <div class="d-flex flex-wrap gap-3">
+          <a href="#upload-section" class="btn btn-primary-blue btn-lg px-4 py-3">
+            <i class="bi bi-search"></i> Detect Deepfake
+          </a>
+          <a href="{% url 'how_it_works' %}" class="btn btn-outline-light btn-lg px-4 py-3" style="border-radius: 10px;">
+            <i class="bi bi-diagram-3"></i> How It Works
+          </a>
+        </div>
+      </div>
+
+      <!-- Right Column: AI Face Visual & Scanner Simulation -->
+      <div class="col-lg-5">
+        <div class="ai-face-scanner-box">
+          <div class="scanner-laser-beam"></div>
+
+          <div class="d-flex justify-content-between align-items-center mb-3 text-white small">
+            <div class="d-flex align-items-center gap-2">
+              <span class="spinner-grow spinner-grow-sm text-info" role="status"></span>
+              <span class="fw-bold tracking-wider text-cyan">BIOMETRIC SCANNER ACTIVE</span>
+            </div>
+            <span class="badge bg-primary-subtle text-primary border">CNN + Spectral v2.1</span>
+          </div>
+
+          <!-- Face Graphic Box with Landmark Simulation -->
+          <div class="ai-face-preview-inner p-4 position-relative">
+            <div class="corner-bracket corner-tl"></div>
+            <div class="corner-bracket corner-tr"></div>
+            <div class="corner-bracket corner-bl"></div>
+            <div class="corner-bracket corner-br"></div>
+
+            <!-- Face Canvas / Simulation -->
+            <div class="text-center py-4 text-white">
+              <div class="position-relative d-inline-block">
+                <i class="bi bi-person-bounding-box" style="font-size: 5rem; color: #38bdf8; opacity: 0.9;"></i>
+                
+                <!-- Pulsing Target Reticle -->
+                <div class="position-absolute top-50 start-50 translate-middle" style="width: 110px; height: 110px; border: 1.5px dashed rgba(0, 210, 255, 0.6); border-radius: 50%;"></div>
+              </div>
+              <div class="mt-2 small text-cyan fw-bold font-monospace">
+                [ 68 LANDMARKS ALIGNED ]
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Telemetry Readout -->
+          <div class="bg-navy-darker p-3 rounded-3 mt-3 border border-secondary border-opacity-25 small text-white-50">
+            <div class="d-flex justify-content-between mb-1">
+              <span>Detection Pipeline:</span>
+              <span class="text-success fw-bold">OPERATIONAL</span>
+            </div>
+            <div class="d-flex justify-content-between mb-1">
+              <span>Face Detector:</span>
+              <span class="text-cyan fw-bold">YuNet ONNX v2023</span>
+            </div>
+            <div class="d-flex justify-content-between">
+              <span>Platform Scans:</span>
+              <span class="text-white fw-bold">{{ total_detections_platform }} Total</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================================
+     2. UPLOAD / DETECTION SECTION (Large White Card Matching Reference)
+     ========================================================================= -->
+<section id="upload-section" class="py-5" style="background-color: var(--bg-body);">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-10 col-xl-9">
+        
+        <div class="upload-main-card" style="margin-top: 0;">
+          <div class="text-center mb-4">
+            <h3 class="fw-bold mb-1">Upload Image or Video</h3>
+            <p class="text-muted small">Drag and drop your file here or choose from your device.</p>
+          </div>
+
+          {% if user.is_authenticated %}
+          <!-- Real Django Form posting to /detect/ -->
+          <form method="POST" enctype="multipart/form-data" id="uploadForm" action="{% url 'detect' %}">
+            {% csrf_token %}
+            
+            <!-- Hidden File Input -->
+            <input type="file" name="file" id="mediaFileInput" class="d-none" accept=".jpg,.jpeg,.png,.mp4,.avi,.mov,.mkv" required>
+
+            <!-- Large Dashed Upload Box -->
+            <div class="upload-dropzone-box mb-4" id="uploadDropzone">
+              <div class="upload-cloud-icon-circle">
+                <i class="bi bi-cloud-arrow-up"></i>
+              </div>
+              
+              <h5 class="fw-bold mb-1 text-dark">Drag & Drop your file here</h5>
+              <div class="text-muted small my-2">or</div>
+              
+              <button type="button" class="btn btn-outline-blue btn-sm px-4 mb-3" onclick="document.getElementById('mediaFileInput').click();">
+                <i class="bi bi-folder2-open me-1"></i> Choose File
+              </button>
+
+              <div class="text-muted small">
+                Supported formats: <strong class="text-dark">JPG, PNG, JPEG, MP4, MOV</strong> &bull; Max size: <strong class="text-dark">50 MB</strong>
+              </div>
+            </div>
+
+            <!-- Dynamic Selected File Info Card -->
+            <div class="selected-file-info p-3 bg-light border rounded-3 mb-4 d-none">
+              <div class="d-flex align-items-center gap-3">
+                <img src="#" alt="Preview" class="preview-thumbnail-img rounded border d-none" style="width: 58px; height: 58px; object-fit: cover;">
+                <div class="flex-grow-1 overflow-hidden">
+                  <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="selected-file-type-badge badge bg-primary">IMAGE</span>
+                    <span class="selected-file-name fw-bold text-truncate text-dark small d-block">filename.jpg</span>
+                  </div>
+                  <div class="small text-muted">
+                    Size: <strong class="selected-file-size text-dark">0 MB</strong>
+                  </div>
+                </div>
+                <div>
+                  <button type="button" class="btn btn-sm btn-outline-danger btn-remove-selected-file">
+                    <i class="bi bi-x-circle me-1"></i> Remove
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Notice -->
+            <div class="alert alert-info border-0 d-flex align-items-center gap-2 mb-4 py-2" style="background-color: #eff6ff;">
+              <i class="bi bi-info-circle-fill text-primary"></i>
+              <div class="small text-muted">
+                Upload a clear image or video containing a visible face for optimal biometric alignment.
+              </div>
+            </div>
+
+            <!-- Large Blue Action Button: "Detect Deepfake" -->
+            <div class="text-center">
+              <button type="submit" id="analyzeBtn" class="btn btn-detect-main py-3 fs-5 justify-content-center shadow-lg opacity-50" disabled>
+                <i class="bi bi-search fs-5"></i> Detect Deepfake
+              </button>
+            </div>
+          </form>
+          {% else %}
+          <!-- Guest CTA: prompt login/register -->
+          <div class="upload-dropzone-box text-center">
+            <div class="upload-cloud-icon-circle mx-auto">
+              <i class="bi bi-shield-lock"></i>
+            </div>
+            <h5 class="fw-bold mb-2 mt-3 text-dark">Ready to Detect Deepfakes?</h5>
+            <p class="text-muted small mb-4">Create a free account or log in to start analyzing images and videos.</p>
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+              <a href="{% url 'register' %}" class="btn btn-primary-blue px-4">
+                <i class="bi bi-person-plus me-1"></i> Create Free Account
+              </a>
+              <a href="{% url 'login' %}" class="btn btn-outline-blue px-4">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Login
+              </a>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================================
+     3. RECENT HISTORY SECTION (Matching Reference Design)
+     ========================================================================= -->
+<section class="py-5 bg-white border-top border-bottom">
+  <div class="container">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+      <div>
+        <span class="badge bg-primary-subtle text-primary border px-3 py-1 rounded-pill small mb-2">
+          <i class="bi bi-clock-history me-1"></i> Recent Inspection Logs
+        </span>
+        <h3 class="fw-bold mb-0">Recent Detection Activity</h3>
+      </div>
+      <div>
+        <a href="{% url 'history' %}" class="btn btn-outline-blue btn-sm">
+          View All History &rarr;
+        </a>
+      </div>
+    </div>
+
+    <div class="custom-card p-0 overflow-hidden shadow-sm">
+      <div class="table-responsive">
+        <table class="table table-custom-history mb-0 align-middle">
+          <thead>
+            <tr>
+              <th style="width: 50px;">#</th>
+              <th>File Name</th>
+              <th>Type</th>
+              <th>Result</th>
+              <th>Confidence</th>
+              <th>Date & Time</th>
+              <th class="text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if recent_history %}
+              {% for scan in recent_history %}
+                <tr>
+                  <td class="text-muted fw-bold">{{ forloop.counter }}</td>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <i class="bi {% if scan.file_type == 'IMAGE' %}bi-file-earmark-image text-primary{% else %}bi-file-earmark-play text-purple{% endif %} fs-5"></i>
+                      <a href="{% url 'detection_details' scan.id %}" class="fw-semibold text-dark text-truncate d-inline-block text-decoration-none" style="max-width: 220px;">
+                        {{ scan.file_name }}
+                      </a>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge {% if scan.file_type == 'IMAGE' %}bg-primary-subtle text-primary{% else %}bg-purple-subtle text-purple{% endif %} border px-2 py-1">
+                      {{ scan.get_file_type_display }}
+                    </span>
+                  </td>
+                  <td>
+                    {% if scan.result == 'REAL' %}
+                      <span class="badge-verdict-real">
+                        <i class="bi bi-check-circle-fill me-1"></i> REAL
+                      </span>
+                    {% elif scan.result == 'FAKE' %}
+                      <span class="badge-verdict-fake">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i> DEEPFAKE
+                      </span>
+                    {% else %}
+                      <span class="badge-verdict-noface">
+                        {% if scan.processing_status == 'MODEL_UNAVAILABLE' %}INCONCLUSIVE{% elif scan.processing_status == 'NO_FACE' %}NO FACE{% else %}{{ scan.result }}{% endif %}
+                      </span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <span class="fw-bold {% if scan.result == 'REAL' and scan.processing_status != 'MODEL_UNAVAILABLE' %}text-success{% elif scan.result == 'FAKE' and scan.processing_status != 'MODEL_UNAVAILABLE' %}text-danger{% else %}text-muted{% endif %}">
+                      {% if scan.processing_status == 'MODEL_UNAVAILABLE' or scan.processing_status == 'NO_FACE' or scan.confidence == 0.0 %}N/A{% else %}{{ scan.confidence|floatformat:1 }}%{% endif %}
+                    </span>
+                  </td>
+                  <td class="text-muted small">
+                    {{ scan.detected_at|date:"M d, Y, H:i" }}
+                  </td>
+                  <td class="text-end">
+                    {% if user.is_authenticated %}
+                    <div class="btn-group btn-group-sm">
+                      <a href="{% url 'detection_result' scan.id %}" class="btn btn-outline-primary" title="View Result">
+                        <i class="bi bi-eye"></i>
+                      </a>
+                      <a href="{% url 'report' scan.id %}" class="btn btn-outline-secondary" title="Download Report">
+                        <i class="bi bi-download"></i>
+                      </a>
+                    </div>
+                    {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-sm btn-outline-primary">
+                      <i class="bi bi-lock me-1"></i>Login to View
+                    </a>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="7" class="text-center py-5 text-muted">
+                  <i class="bi bi-inbox fs-2 text-secondary d-block mb-2 opacity-50"></i>
+                  No scans recorded yet. Upload your first media above to begin analysis!
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================================
+     4. WHAT IS DEEPFAKE & KEY FEATURES SECTION
+     ========================================================================= -->
+<section class="py-5" style="background-color: var(--bg-body);">
+  <div class="container py-3">
+    <div class="text-center max-w-700 mx-auto mb-5">
+      <span class="badge bg-primary-subtle text-primary border px-3 py-2 rounded-pill mb-2">Technology Overview</span>
+      <h2 class="fw-bold">Understanding Deepfake Technology</h2>
+      <p class="text-muted">
+        Synthetic media generated by deep neural networks poses unprecedented challenges to digital security, misinformation, and media trust.
+      </p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="custom-card p-4 h-100">
+          <div class="stat-icon-wrapper stat-icon-blue mb-3">
+            <i class="bi bi-question-diamond-fill"></i>
+          </div>
+          <h5 class="fw-bold mb-2">What Are Deepfakes?</h5>
+          <p class="text-muted small mb-0">
+            Deepfakes are synthetic audio, video, or image media where a person's likeness, facial expression, or voice has been altered using deep learning models such as Generative Adversarial Networks (GANs).
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="custom-card p-4 h-100">
+          <div class="stat-icon-wrapper stat-icon-amber mb-3">
+            <i class="bi bi-gear-wide-connected"></i>
+          </div>
+          <h5 class="fw-bold mb-2">How Are They Created?</h5>
+          <p class="text-muted small mb-0">
+            Generators create synthetic frames while discriminators challenge them. Facial landmark swapping and diffusion models blend artificial faces into destination videos frame-by-frame.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="custom-card p-4 h-100">
+          <div class="stat-icon-wrapper stat-icon-green mb-3">
+            <i class="bi bi-shield-check"></i>
+          </div>
+          <h5 class="fw-bold mb-2">Why Detection Matters</h5>
+          <p class="text-muted small mb-0">
+            Automated AI verification prevents identity fraud, protects journalism credibility, and safeguards KYC onboarding systems from sophisticated synthetic presentation attacks.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================================
+     5. 5-STAGE PIPELINE OVERVIEW & CALL TO ACTION
+     ========================================================================= -->
+<section class="py-5 bg-white border-top border-bottom">
+  <div class="container py-3">
+    <div class="text-center max-w-700 mx-auto mb-5">
+      <span class="badge bg-primary-subtle text-primary border px-3 py-2 rounded-pill mb-2">Step-By-Step Workflow</span>
+      <h2 class="fw-bold">How the Detection Pipeline Works</h2>
+      <p class="text-muted">
+        From media upload to forensic classification in five automated stages.
+      </p>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+      <div class="col-lg-2 col-md-4 col-6">
+        <div class="pipeline-step-card h-100">
+          <div class="step-number">1</div>
+          <h6 class="fw-bold mb-1">Upload</h6>
+          <p class="small text-muted mb-0">Drop any image or video file.</p>
+        </div>
+      </div>
+
+      <div class="col-lg-2 col-md-4 col-6">
+        <div class="pipeline-step-card h-100">
+          <div class="step-number">2</div>
+          <h6 class="fw-bold mb-1">Preprocess</h6>
+          <p class="small text-muted mb-0">Format verification & frame sampling.</p>
+        </div>
+      </div>
+
+      <div class="col-lg-2 col-md-4 col-6">
+        <div class="pipeline-step-card h-100">
+          <div class="step-number">3</div>
+          <h6 class="fw-bold mb-1">Detect Face</h6>
+          <p class="small text-muted mb-0">OpenCV facial bounding box localization.</p>
+        </div>
+      </div>
+
+      <div class="col-lg-2 col-md-4 col-6">
+        <div class="pipeline-step-card h-100">
+          <div class="step-number">4</div>
+          <h6 class="fw-bold mb-1">AI Analysis</h6>
+          <p class="small text-muted mb-0">Neural pattern & spectral texture check.</p>
+        </div>
+      </div>
+
+      <div class="col-lg-2 col-md-4 col-6">
+        <div class="pipeline-step-card h-100">
+          <div class="step-number">5</div>
+          <h6 class="fw-bold mb-1">Result</h6>
+          <p class="small text-muted mb-0">REAL/FAKE verdict & PDF report.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================================
+     6. 5-STAGE ANIMATED PROCESSING OVERLAY (MODAL)
+     ========================================================================= -->
+<div class="processing-overlay" id="processingOverlay">
+  <div class="processing-card">
+    <div class="spinner-ai-glow"></div>
+    <h4 class="fw-bold mb-1">Analyzing Media...</h4>
+    <p class="text-muted small mb-4">Please wait while our AI forensics pipeline inspects biometric features.</p>
+
+    <div class="text-start">
+      <div class="processing-step active" id="step-upload">
+        <span class="step-status"><span class="spinner-border spinner-border-sm text-primary"></span></span>
+        <span>Uploading media stream</span>
+      </div>
+
+      <div class="processing-step" id="step-preprocess">
+        <span class="step-status"><i class="bi bi-circle text-muted"></i></span>
+        <span>Preprocessing & normalizing frames</span>
+      </div>
+
+      <div class="processing-step" id="step-face">
+        <span class="step-status"><i class="bi bi-circle text-muted"></i></span>
+        <span>Detecting & cropping facial region</span>
+      </div>
+
+      <div class="processing-step" id="step-ai">
+        <span class="step-status"><i class="bi bi-circle text-muted"></i></span>
+        <span>Running CNN & Fourier frequency check</span>
+      </div>
+
+      <div class="processing-step" id="step-result">
+        <span class="step-status"><i class="bi bi-circle text-muted"></i></span>
+        <span>Generating verified classification result</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

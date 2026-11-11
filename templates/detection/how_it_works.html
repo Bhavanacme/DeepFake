@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+  
+  <!-- Page Header -->
+  <div class="text-center max-w-700 mx-auto mb-5">
+    <span class="badge bg-primary-subtle text-primary border px-3 py-2 rounded-pill mb-2">
+      <i class="bi bi-diagram-3 me-1"></i> Technical Architecture
+    </span>
+    <h2 class="fw-bold">How Deepfake Detection Works</h2>
+    <p class="text-muted">
+      An in-depth look into the 8-stage automated pipeline that transforms raw media files into authenticated biometric forensic verdicts.
+    </p>
+  </div>
+
+  <!-- 8-Stage Step Cards Timeline -->
+  <div class="row g-4 mb-5">
+    
+    <!-- Stage 1 -->
+    <div class="col-md-6 col-lg-3">
+      <div class="pipeline-step-card h-100">
+        <div class="step-number">1</div>
+        <h5 class="fw-bold mb-2">1. Upload Media</h5>
+        <p class="text-muted small mb-0">
+          The user securely submits an image (JPG, PNG) or video (MP4, AVI, MOV) through the drag-and-drop web interface.
+        </p>
+      </div>
+    </div>
+
+    <!-- Stage 2 -->
+    <div class="col-md-6 col-lg-3">
+      <div class="pipeline-step-card h-100">
+        <div class="step-number">2</div>
+        <h5 class="fw-bold mb-2">2. Validate File</h5>
+        <p class="text-muted small mb-0">
+          Server-side validation confirms file integrity, size threshold (up to 50MB), MIME types, and header security to prevent malformed inputs.
+        </p>
+      </div>
+    </div>
+
+    <!-- Stage 3 -->
+    <div class="col-md-6 col-lg-3">
+      <div class="pipeline-step-card h-100">
+        <div class="step-number">3</div>
+        <h5 class="fw-bold mb-2">3. Preprocess Media</h5>
+        <p class="text-muted small mb-0">
+          Image bytes are decoded via <code>cv2.imdecode()</code> for reliable reading. For videos, keyframes are sampled evenly across the timeline.
+        </p>
+      </div>
+    </div>
+
+    <!-- Stage 4 -->
+    <div class="col-md-6 col-lg-3">
+      <div class="pipeline-step-card h-100">
+        <div class="step-number">4</div>
+        <h5 class="fw-bold mb-2">4. Extract Frames</h5>
+        <p class="text-muted small mb-0">
+          Evenly distributed keyframes are sampled across the video timeline to capture temporal variations and inter-frame transitions.
+        </p>
+      </div>
+    </div>
+
+    <!-- Stage 5 -->
+    <div class="col-md-6 col-lg-3">
+      <div class="pipeline-step-card h-100">
+        <div class="step-number">5</div>
+        <h5 class="fw-bold mb-2">5. Detect Face</h5>
+        <p class="text-muted small mb-0">
+          OpenCV 5 <strong>YuNet AI</strong> (FaceDetectorYN) scans for faces via deep neural network. If nothing found, a relaxed-threshold retry runs automatically as a robust fallback.
+        </p>
+      </div>
+    </div>
+
+    <!-- Stage 6 -->
+    <div class="col-md-6 col-lg-3">
+      <div class="pipeline-step-card h-100">
+        <div class="step-number">6</div>
+        <h5 class="fw-bold mb-2">6. AI Analysis</h5>
+        <p class="text-muted small mb-0">
+          Cropped face matrices (224&times;224, normalized [0,1]) analyzed by CNN layers and 2D Fourier frequency filters to detect GAN micro-texture anomalies and blending artifacts.
+        </p>
+      </div>
+    </div>
+
+    <!-- Stage 7 -->
+    <div class="col-md-6 col-lg-3">
+      <div class="pipeline-step-card h-100">
+        <div class="step-number">7</div>
+        <h5 class="fw-bold mb-2">7. Generate Result</h5>
+        <p class="text-muted small mb-0">
+          The classification head produces Real vs Fake probability scores, issuing a final verdict — REAL, DEEPFAKE, or ANALYSIS INCONCLUSIVE — with a confidence percentage.
+        </p>
+      </div>
+    </div>
+
+    <!-- Stage 8 -->
+    <div class="col-md-6 col-lg-3">
+      <div class="pipeline-step-card h-100">
+        <div class="step-number">8</div>
+        <h5 class="fw-bold mb-2">8. Save Detection</h5>
+        <p class="text-muted small mb-0">
+          Results, forensic telemetry, and face preview saved to the user's account. A downloadable ReportLab PDF forensic certificate is generated instantly.
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Pipeline Flowchart Diagram — Two-Column Layout -->
+  <div class="custom-card p-4 p-md-5 mb-5">
+    <div class="row align-items-center g-5">
+
+      <!-- Left: actual generated flowchart image -->
+      <div class="col-lg-5 text-center">
+        <img src="{% static 'img/detection_pipeline_flowchart.jpg' %}"
+             alt="Deepfake Detection Pipeline Flowchart"
+             class="img-fluid rounded-3 shadow"
+             style="max-height: 700px; object-fit: contain;">
+      </div>
+
+      <!-- Right: annotated step explanations -->
+      <div class="col-lg-7">
+        <h4 class="fw-bold mb-4">
+          <i class="bi bi-diagram-3 text-primary me-2"></i>
+          Detection Pipeline &mdash; Decision Flow
+        </h4>
+
+        <div class="d-flex flex-column gap-3">
+
+          <div class="d-flex gap-3 align-items-start">
+            <span class="badge rounded-circle bg-primary text-white px-2 py-1 mt-1 flex-shrink-0">1</span>
+            <div>
+              <strong>Upload &amp; Validate</strong>
+              <p class="text-muted small mb-0">Extension (JPG/PNG/MP4/AVI/MOV), size &le; 50&nbsp;MB, and pixel integrity verified using PIL before any processing begins.</p>
+            </div>
+          </div>
+
+          <div class="d-flex gap-3 align-items-start">
+            <span class="badge rounded-circle bg-primary text-white px-2 py-1 mt-1 flex-shrink-0">2</span>
+            <div>
+              <strong>Convert &amp; Read Image</strong>
+              <p class="text-muted small mb-0">Image bytes decoded via <code>cv2.imdecode()</code> &mdash; bypasses Windows Unicode path issues common with <code>cv2.imread()</code>.</p>
+            </div>
+          </div>
+
+          <div class="d-flex gap-3 align-items-start">
+            <span class="badge rounded-circle bg-primary text-white px-2 py-1 mt-1 flex-shrink-0">3</span>
+            <div>
+              <strong>YuNet Face Detection (OpenCV 5)</strong>
+              <p class="text-muted small mb-0"><code>FaceDetectorYN</code> neural network runs at confidence threshold&nbsp;0.55. If no face found, automatic retry at&nbsp;0.35 provides a robust second pass.</p>
+            </div>
+          </div>
+
+          <div class="d-flex gap-3 align-items-start">
+            <span class="badge rounded-pill bg-success text-white px-2 py-1 mt-1 flex-shrink-0 small">YES</span>
+            <div>
+              <strong class="text-success">Face Found &rarr; Crop &rarr; Resize 224&times;224 &rarr; Normalize</strong>
+              <p class="text-muted small mb-0">Primary face cropped with 15% padding, resized to <strong>224&times;224&nbsp;px</strong>, normalized to [0,&nbsp;1] float &mdash; ready for model input.</p>
+            </div>
+          </div>
+
+          <div class="d-flex gap-3 align-items-start">
+            <span class="badge rounded-pill bg-danger text-white px-2 py-1 mt-1 flex-shrink-0 small">NO</span>
+            <div>
+              <strong class="text-danger">Both Passes Failed &rarr; Analysis Inconclusive</strong>
+              <p class="text-muted small mb-0">No verdict assigned without a confirmed face. System returns <em>Analysis Inconclusive</em> &mdash; confidence shown as N/A, never a fabricated score.</p>
+            </div>
+          </div>
+
+          <div class="d-flex gap-3 align-items-start">
+            <span class="badge rounded-circle bg-dark text-white px-2 py-1 mt-1 flex-shrink-0">AI</span>
+            <div>
+              <strong>Deepfake Model Inference</strong>
+              <p class="text-muted small mb-0">If <code>deepfake_model.h5</code> is present: Keras CNN inference. Otherwise: CV Forensic Engine using Laplacian sharpness variance + FFT frequency energy + YCbCr Chroma disparity.</p>
+            </div>
+          </div>
+
+          <div class="d-flex gap-3 align-items-start">
+            <span class="badge rounded-circle bg-primary text-white px-2 py-1 mt-1 flex-shrink-0">&#10003;</span>
+            <div>
+              <strong>Verdict + Confidence Score + PDF Report</strong>
+              <p class="text-muted small mb-0">
+                <span class="text-success fw-bold">REAL &#10003;</span> or <span class="text-danger fw-bold">DEEPFAKE &#10005;</span>
+                &mdash; with confidence %, Real/Fake probability scores, and a downloadable forensic PDF certificate.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div><!-- /col -->
+
+    </div><!-- /row -->
+  </div>
+
+  <!-- Interactive Call to Action -->
+  <div class="text-center">
+    <h4 class="fw-bold mb-3">Ready to test the pipeline?</h4>
+    <a href="{% url 'detect' %}" class="btn btn-primary-blue btn-lg px-4 py-2">
+      <i class="bi bi-cloud-arrow-up-fill me-1"></i> Start New Detection
+    </a>
+  </div>
+
+</div>
+{% endblock %}

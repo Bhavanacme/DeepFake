@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5 my-3">
+  <div class="row justify-content-center">
+    <div class="col-md-7 col-lg-6">
+      <div class="auth-card">
+        <div class="text-center mb-4">
+          <div class="brand-icon-shield mx-auto mb-3" style="width: 52px; height: 52px; font-size: 1.6rem;">
+            <i class="bi bi-person-plus"></i>
+          </div>
+          <h3 class="fw-bold mb-1">Create Account</h3>
+          <p class="text-muted small">Join the Deepfake Detector verification platform</p>
+        </div>
+
+        <form method="POST" action="{% url 'register' %}">
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label for="reg-full-name" class="form-label fw-semibold small">Full Name</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-person-badge"></i></span>
+              {{ form.full_name }}
+            </div>
+            {% if form.full_name.errors %}
+              <div class="text-danger small mt-1">{{ form.full_name.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label for="reg-username" class="form-label fw-semibold small">Username</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-at"></i></span>
+                {{ form.username }}
+              </div>
+              {% if form.username.errors %}
+                <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
+              {% endif %}
+            </div>
+
+            <div class="col-sm-6">
+              <label for="reg-email" class="form-label fw-semibold small">Email Address</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-envelope"></i></span>
+                {{ form.email }}
+              </div>
+              {% if form.email.errors %}
+                <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-sm-6">
+              <label for="reg-password" class="form-label fw-semibold small">Password</label>
+              <div class="input-group password-wrapper">
+                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-lock"></i></span>
+                {{ form.password }}
+                <button type="button" class="password-toggle-btn" data-target="reg-password" title="Toggle password visibility">
+                  <i class="bi bi-eye-fill"></i>
+                </button>
+              </div>
+              {% if form.password.errors %}
+                <div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>
+              {% endif %}
+            </div>
+
+            <div class="col-sm-6">
+              <label for="reg-confirm-password" class="form-label fw-semibold small">Confirm Password</label>
+              <div class="input-group password-wrapper">
+                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-shield-lock"></i></span>
+                {{ form.confirm_password }}
+                <button type="button" class="password-toggle-btn" data-target="reg-confirm-password" title="Toggle password visibility">
+                  <i class="bi bi-eye-fill"></i>
+                </button>
+              </div>
+              {% if form.confirm_password.errors %}
+                <div class="text-danger small mt-1">{{ form.confirm_password.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary-blue w-100 py-2 justify-content-center mb-3">
+            <i class="bi bi-check-circle"></i> Create My Account
+          </button>
+        </form>
+
+        <div class="text-center pt-3 border-top">
+          <p class="small text-muted mb-0">
+            Already have an account? 
+            <a href="{% url 'login' %}" class="fw-bold text-primary">Login here</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

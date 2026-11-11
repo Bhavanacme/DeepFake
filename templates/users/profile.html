@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row g-4">
+    <!-- User Profile Overview Sidebar -->
+    <div class="col-lg-4">
+      <div class="custom-card p-4 text-center mb-4">
+        <div class="position-relative d-inline-block mb-3">
+          {% if profile.avatar %}
+            <img src="{{ profile.avatar.url }}" alt="{{ user.username }}" class="rounded-circle img-thumbnail shadow-sm" style="width: 120px; height: 120px; object-fit: cover;">
+          {% else %}
+            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto shadow-sm" style="width: 120px; height: 120px; font-size: 2.8rem; font-weight: 700;">
+              {{ user.username|make_list|first|upper }}
+            </div>
+          {% endif %}
+        </div>
+
+        <h4 class="fw-bold mb-1">{{ user.get_full_name|default:user.username }}</h4>
+        <p class="text-muted small mb-2">@{{ user.username }}</p>
+        <span class="badge bg-primary-subtle text-primary border px-3 py-2 rounded-pill small mb-3">
+          {{ profile.organization|default:"Diploma CSE Student" }}
+        </span>
+
+        <p class="small text-secondary px-2">
+          {{ profile.bio|default:"Deepfake forensics analyst & computer science researcher." }}
+        </p>
+
+        <hr class="my-3">
+
+        <div class="text-start small text-muted">
+          <div class="d-flex justify-content-between py-1">
+            <span><i class="bi bi-envelope me-2 text-primary"></i> Email</span>
+            <span class="fw-semibold text-dark">{{ user.email|default:"Not specified" }}</span>
+          </div>
+          <div class="d-flex justify-content-between py-1">
+            <span><i class="bi bi-calendar-event me-2 text-primary"></i> Joined</span>
+            <span class="fw-semibold text-dark">{{ user.date_joined|date:"M d, Y" }}</span>
+          </div>
+          <div class="d-flex justify-content-between py-1">
+            <span><i class="bi bi-shield-check me-2 text-primary"></i> Role</span>
+            <span class="fw-semibold text-dark">{% if user.is_staff %}Administrator{% else %}Standard User{% endif %}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detection Statistics Card -->
+      <div class="custom-card p-4">
+        <h6 class="fw-bold mb-3"><i class="bi bi-graph-up me-2 text-primary"></i> Personal Analytics</h6>
+        <div class="row g-2 text-center">
+          <div class="col-4">
+            <div class="p-2 bg-light rounded-3">
+              <h5 class="fw-bold text-primary mb-0">{{ total_detections }}</h5>
+              <small class="text-muted" style="font-size: 11px;">Scans</small>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="p-2 bg-success-subtle rounded-3">
+              <h5 class="fw-bold text-success mb-0">{{ real_count }}</h5>
+              <small class="text-muted" style="font-size: 11px;">Real</small>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="p-2 bg-danger-subtle rounded-3">
+              <h5 class="fw-bold text-danger mb-0">{{ fake_count }}</h5>
+              <small class="text-muted" style="font-size: 11px;">Fake</small>
+            </div>
+          </div>
+        </div>
+        <div class="mt-3">
+          <a href="{% url 'detect' %}" class="btn btn-outline-blue btn-sm w-100">
+            <i class="bi bi-plus-circle me-1"></i> New Detection
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Profile Form -->
+    <div class="col-lg-8">
+      <div class="custom-card p-4 p-md-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h4 class="fw-bold mb-1">Edit Profile Details</h4>
+            <p class="text-muted small mb-0">Update your account credentials and research profile</p>
+          </div>
+          <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Dashboard
+          </a>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data">
+          {% csrf_token %}
+
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label class="form-label fw-semibold small">First Name</label>
+              {{ user_form.first_name }}
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label fw-semibold small">Last Name</label>
+              {{ user_form.last_name }}
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label class="form-label fw-semibold small">Email Address</label>
+              {{ user_form.email }}
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label fw-semibold small">Phone Number</label>
+              {{ profile_form.phone_number }}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">College / Organization</label>
+            {{ profile_form.organization }}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Bio</label>
+            {{ profile_form.bio }}
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold small">Profile Picture (Avatar)</label>
+            {{ profile_form.avatar }}
+            <div class="form-text small">Accepted formats: JPG, PNG. Recommended 250x250 square.</div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary-blue px-4">
+              <i class="bi bi-save me-1"></i> Save Changes
+            </button>
+            <a href="{% url 'profile' %}" class="btn btn-light border px-4">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

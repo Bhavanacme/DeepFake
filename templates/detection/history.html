@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+  
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <span class="badge bg-primary-subtle text-primary border px-3 py-1 rounded-pill small mb-2 fw-semibold">
+        <i class="bi bi-journal-text me-1"></i> Scan Audit Trail
+      </span>
+      <h2 class="fw-bold mb-1">Detection History</h2>
+      <p class="text-muted small mb-0">Browse and inspect your previous media detection records</p>
+    </div>
+    <div>
+      <a href="{% url 'detect' %}" class="btn btn-primary-blue shadow-sm">
+        <i class="bi bi-cloud-arrow-up-fill me-1"></i> Detect Deepfake
+      </a>
+    </div>
+  </div>
+
+  <!-- Filter & Search Controls -->
+  <div class="custom-card p-3 mb-4 shadow-sm">
+    <div class="row g-3 align-items-center justify-content-between">
+      
+      <!-- Filter Buttons (Normal, Hover, Active with Blue Glow) -->
+      <div class="col-md-7">
+        <div class="filter-btn-group d-flex gap-2 flex-wrap" role="group">
+          <a href="?filter=all{% if search_query %}&q={{ search_query }}{% endif %}" class="btn {% if filter_type == 'all' or not filter_type %}active-filter{% else %}btn-outline-secondary{% endif %}">
+            All
+          </a>
+          <a href="?filter=real{% if search_query %}&q={{ search_query }}{% endif %}" class="btn {% if filter_type == 'real' %}active-filter{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-check-circle me-1"></i> Real
+          </a>
+          <a href="?filter=fake{% if search_query %}&q={{ search_query }}{% endif %}" class="btn {% if filter_type == 'fake' %}active-filter{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-exclamation-triangle me-1"></i> Fake
+          </a>
+          <a href="?filter=ai_generated{% if search_query %}&q={{ search_query }}{% endif %}" class="btn {% if filter_type == 'ai_generated' %}active-filter{% else %}btn-outline-secondary{% endif %}" style="{% if filter_type == 'ai_generated' %}background:#7c3aed;border-color:#7c3aed;color:white;{% endif %}">
+            <i class="bi bi-cpu me-1"></i> AI-Generated
+          </a>
+          <a href="?filter=no_face{% if search_query %}&q={{ search_query }}{% endif %}" class="btn {% if filter_type == 'no_face' %}active-filter{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-question-circle me-1"></i> No Face
+          </a>
+        </div>
+      </div>
+
+      <!-- Search Field -->
+      <div class="col-md-5">
+        <form method="GET" action="{% url 'history' %}" class="d-flex gap-2">
+          {% if filter_type %}<input type="hidden" name="filter" value="{{ filter_type }}">{% endif %}
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
+            <input type="text" name="q" value="{{ search_query }}" class="form-control border-start-0" placeholder="Search file name...">
+            <button type="submit" class="btn btn-outline-blue">Search</button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- History Records Table -->
+  <div class="custom-card p-0 overflow-hidden shadow-sm">
+    {% if page_obj %}
+      <div class="table-responsive">
+        <table class="table table-custom-history mb-0 align-middle">
+          <thead>
+            <tr>
+              <th style="width: 50px;">#</th>
+              <th>File Name</th>
+              <th>File Type</th>
+              <th>Result</th>
+              <th>Confidence</th>
+              <th>Date & Time</th>
+              <th class="text-center">View</th>
+              <th class="text-center">Download</th>
+              <th class="text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in page_obj %}
+              <tr>
+                <td class="text-muted fw-bold">{{ forloop.counter }}</td>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="bi {% if item.file_type == 'IMAGE' %}bi-file-earmark-image text-primary{% else %}bi-file-earmark-play text-purple{% endif %} fs-4"></i>
+                    <div>
+                      <a href="{% url 'detection_details' item.id %}" class="fw-semibold text-dark text-truncate d-inline-block text-decoration-none" style="max-width: 200px;">
+                        {{ item.file_name }}
+                      </a>
+                      <span class="text-muted d-block" style="font-size: 11px;">{{ item.file_size_mb }} MB</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge {% if item.file_type == 'IMAGE' %}bg-primary-subtle text-primary border border-primary-subtle{% else %}bg-purple-subtle text-purple border{% endif %}">
+                    {{ item.get_file_type_display }}
+                  </span>
+                </td>
+                <td>
+                  {% if item.result == 'REAL' %}
+                    <span class="badge-verdict-real">
+                      <i class="bi bi-check-circle-fill me-1"></i> REAL
+                    </span>
+                  {% elif item.result == 'FAKE' %}
+                    <span class="badge-verdict-fake">
+                      <i class="bi bi-exclamation-triangle-fill me-1"></i> DEEPFAKE
+                    </span>
+                  {% elif item.result == 'AI_GENERATED' %}
+                    <span class="badge-verdict-ai-gen">
+                      <i class="bi bi-cpu-fill me-1"></i> AI-GENERATED
+                    </span>
+                  {% else %}
+                    <span class="badge-verdict-noface">
+                      {% if item.processing_status == 'MODEL_UNAVAILABLE' %}INCONCLUSIVE{% elif item.processing_status == 'NO_FACE' %}NO FACE{% else %}{{ item.result }}{% endif %}
+                    </span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="fw-bold {% if item.result == 'REAL' and item.processing_status != 'MODEL_UNAVAILABLE' %}text-success{% elif item.result == 'FAKE' and item.processing_status != 'MODEL_UNAVAILABLE' %}text-danger{% else %}text-muted{% endif %}">
+                    {% if item.processing_status == 'MODEL_UNAVAILABLE' or item.processing_status == 'NO_FACE' or item.confidence == 0.0 %}N/A{% else %}{{ item.confidence|floatformat:1 }}%{% endif %}
+                  </span>
+                </td>
+                <td class="text-muted small">
+                  {{ item.detected_at|date:"M d, Y, H:i" }}
+                </td>
+                <td class="text-center">
+                  <a href="{% url 'detection_details' item.id %}" class="btn btn-sm btn-outline-primary" title="View Details">
+                    <i class="bi bi-eye"></i> View
+                  </a>
+                </td>
+                <td class="text-center">
+                  <a href="{% url 'report' item.id %}" class="btn btn-sm btn-outline-success" title="Download Report">
+                    <i class="bi bi-file-earmark-pdf"></i> PDF
+                  </a>
+                </td>
+                <td class="text-end">
+                  <form method="POST" action="{% url 'delete_result' item.id %}" onsubmit="return confirm('Delete this detection record permanently?');" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete record">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      {% if page_obj.has_other_pages %}
+        <nav aria-label="Page navigation" class="p-3 border-top">
+          <ul class="pagination pagination-sm justify-content-center mb-0">
+            {% if page_obj.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if filter_type %}&filter={{ filter_type }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">
+                  Previous
+                </a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">Previous</span></li>
+            {% endif %}
+
+            {% for p in page_obj.paginator.page_range %}
+              {% if page_obj.number == p %}
+                <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+              {% else %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ p }}{% if filter_type %}&filter={{ filter_type }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">{{ p }}</a>
+                </li>
+              {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if filter_type %}&filter={{ filter_type }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">
+                  Next
+                </a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">Next</span></li>
+            {% endif %}
+          </ul>
+        </nav>
+      {% endif %}
+
+    {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-search fs-1 text-secondary opacity-50 d-block mb-2"></i>
+        <h5 class="fw-bold text-dark">No records found</h5>
+        <p class="small mb-3">No scans match your current filter or search criteria.</p>
+        <a href="{% url 'detect' %}" class="btn btn-primary-blue btn-sm">
+          <i class="bi bi-cloud-arrow-up me-1"></i> Detect Deepfake
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

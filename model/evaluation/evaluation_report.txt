@@ -1,0 +1,13 @@
+DEEPFAKE CLASSIFIER EVALUATION REPORT
+Generated: 2026-10-23 12:14:30
+Model: C:\Users\User\OneDrive\Desktop\Detection project\model\deepfake_detector_v1.onnx
+Test images: 20 evaluated, 0 errors
+Threshold: 0.5
+
+Accuracy:    50.00%
+Precision:   0.00%
+Recall:      0.00%
+F1-Score:    0.00%
+Specificity: 100.00%
+
+TP=0  TN=10  FP=0  FN=10

@@ -1,0 +1,331 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+  
+  <!-- Admin Header Banner -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <span class="badge bg-warning text-dark border px-3 py-1 rounded-pill small mb-2 fw-bold">
+        <i class="bi bi-shield-shaded me-1"></i> System Administration
+      </span>
+      <h2 class="fw-bold mb-1">Administrative Analytics Dashboard</h2>
+      <p class="text-muted small mb-0">Platform-wide media verification metrics, storage telemetry, and user management.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{% url 'admin:index' %}" target="_blank" class="btn btn-outline-secondary btn-sm shadow-sm">
+        <i class="bi bi-shield-lock me-1"></i> Django Admin Panel
+      </a>
+      <a href="{% url 'detect' %}" class="btn btn-primary-blue btn-sm shadow-sm">
+        <i class="bi bi-plus-circle me-1"></i> Scan Media
+      </a>
+    </div>
+  </div>
+
+  <!-- Platform KPI Statistics Cards -->
+  <div class="row g-3 mb-4">
+    
+    <div class="col-sm-6 col-lg-2">
+      <div class="kpi-card p-3">
+        <div class="kpi-icon-wrapper kpi-icon-blue" style="width: 44px; height: 44px; font-size: 1.2rem;">
+          <i class="bi bi-people-fill"></i>
+        </div>
+        <div>
+          <span class="text-muted small d-block" style="font-size: 11px;">Total Users</span>
+          <h4 class="fw-bold mb-0 text-dark">{{ total_users }}</h4>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-2">
+      <div class="kpi-card p-3">
+        <div class="kpi-icon-wrapper kpi-icon-blue" style="width: 44px; height: 44px; font-size: 1.2rem;">
+          <i class="bi bi-cloud-arrow-up-fill"></i>
+        </div>
+        <div>
+          <span class="text-muted small d-block" style="font-size: 11px;">Total Uploads</span>
+          <h4 class="fw-bold mb-0 text-dark">{{ total_detections }}</h4>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-2">
+      <div class="kpi-card p-3">
+        <div class="kpi-icon-wrapper kpi-icon-green" style="width: 44px; height: 44px; font-size: 1.2rem;">
+          <i class="bi bi-check-circle-fill"></i>
+        </div>
+        <div>
+          <span class="text-muted small d-block" style="font-size: 11px;">Real Media</span>
+          <h4 class="fw-bold mb-0 text-success">{{ total_real }}</h4>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-2">
+      <div class="kpi-card p-3">
+        <div class="kpi-icon-wrapper kpi-icon-red" style="width: 44px; height: 44px; font-size: 1.2rem;">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+        <div>
+          <span class="text-muted small d-block" style="font-size: 11px;">Deepfakes</span>
+          <h4 class="fw-bold mb-0 text-danger">{{ total_fake }}</h4>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-2">
+      <div class="kpi-card p-3">
+        <div class="kpi-icon-wrapper kpi-icon-amber" style="width: 44px; height: 44px; font-size: 1.2rem;">
+          <i class="bi bi-question-circle-fill"></i>
+        </div>
+        <div>
+          <span class="text-muted small d-block" style="font-size: 11px;">Inconclusive</span>
+          <h4 class="fw-bold mb-0 text-warning">{{ total_no_face }}</h4>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-2">
+      <div class="kpi-card p-3">
+        <div class="kpi-icon-wrapper kpi-icon-blue" style="width: 44px; height: 44px; font-size: 1.2rem;">
+          <i class="bi bi-hdd-fill"></i>
+        </div>
+        <div>
+          <span class="text-muted small d-block" style="font-size: 11px;">Storage Used</span>
+          <h4 class="fw-bold mb-0 text-primary">{{ total_storage }} <span style="font-size: 11px;">MB</span></h4>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Charts Row -->
+  <div class="row g-4 mb-4">
+    <div class="col-lg-6">
+      <div class="custom-card p-4 h-100">
+        <h5 class="fw-bold mb-3"><i class="bi bi-pie-chart text-primary me-2"></i> Verdict Distribution</h5>
+        <div style="max-height: 220px; position: relative;">
+          <canvas id="adminVerdictChart"></canvas>
+        </div>
+        <div class="d-flex justify-content-around text-center mt-3 pt-3 border-top small">
+          <div>
+            <span class="text-success fw-bold d-block">{{ total_real }}</span>
+            <span class="text-muted">Real</span>
+          </div>
+          <div>
+            <span class="text-danger fw-bold d-block">{{ total_fake }}</span>
+            <span class="text-muted">Deepfake</span>
+          </div>
+          <div>
+            <span class="text-warning fw-bold d-block">{{ total_no_face }}</span>
+            <span class="text-muted">No Face</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="custom-card p-4 h-100">
+        <h5 class="fw-bold mb-3"><i class="bi bi-bar-chart text-primary me-2"></i> Uploads by Format</h5>
+        <div style="max-height: 220px; position: relative;">
+          <canvas id="adminFormatChart"></canvas>
+        </div>
+        <div class="d-flex justify-content-around text-center mt-3 pt-3 border-top small">
+          <div>
+            <span class="text-primary fw-bold d-block">{{ total_images }}</span>
+            <span class="text-muted">Images (JPG/PNG)</span>
+          </div>
+          <div>
+            <span class="text-purple fw-bold d-block" style="color: #7c3aed;">{{ total_videos }}</span>
+            <span class="text-muted">Videos (MP4/AVI)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Platform Users Management Table -->
+  <div class="custom-card p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h5 class="fw-bold mb-1"><i class="bi bi-people text-primary me-2"></i> Registered Platform Users</h5>
+        <span class="text-muted small">Registered students and administrative accounts</span>
+      </div>
+      <a href="{% url 'admin:auth_user_changelist' %}" target="_blank" class="btn btn-outline-secondary btn-sm">
+        Manage in Django Admin <i class="bi bi-box-arrow-up-right"></i>
+      </a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 small">
+        <thead class="table-light">
+          <tr>
+            <th>Username</th>
+            <th>Full Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Total Scans</th>
+            <th>Joined</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in all_users %}
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge bg-primary rounded-circle p-2" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;">
+                    {{ u.username|make_list|first|upper }}
+                  </span>
+                  <span class="fw-bold text-dark">{{ u.username }}</span>
+                </div>
+              </td>
+              <td>{{ u.get_full_name|default:"Not specified" }}</td>
+              <td class="text-muted">{{ u.email|default:"N/A" }}</td>
+              <td>
+                {% if u.is_superuser %}
+                  <span class="badge bg-danger">Superuser</span>
+                {% elif u.is_staff %}
+                  <span class="badge bg-warning text-dark">Staff</span>
+                {% else %}
+                  <span class="badge bg-light text-dark border">Student / User</span>
+                {% endif %}
+              </td>
+              <td class="fw-semibold text-primary">{{ u.detection_results.count }}</td>
+              <td class="text-muted">{{ u.date_joined|date:"M d, Y" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Global Recent Scans Audit Log -->
+  <div class="custom-card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h5 class="fw-bold mb-1"><i class="bi bi-journal-text text-primary me-2"></i> Global Activity Audit Log</h5>
+        <span class="text-muted small">All user scans, verdicts, and telemetry</span>
+      </div>
+      <a href="{% url 'admin:detection_detectionresult_changelist' %}" target="_blank" class="btn btn-outline-secondary btn-sm">
+        Inspect in Django Admin <i class="bi bi-box-arrow-up-right"></i>
+      </a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 small">
+        <thead class="table-light">
+          <tr>
+            <th>User</th>
+            <th>File Name</th>
+            <th>Type</th>
+            <th>Verdict</th>
+            <th>Confidence</th>
+            <th>Timestamp</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in recent_activity %}
+            <tr>
+              <td class="fw-semibold text-dark">
+                <i class="bi bi-person me-1 text-primary"></i> {{ item.user.username }}
+              </td>
+              <td>
+                <span class="text-truncate d-inline-block" style="max-width: 180px;">{{ item.file_name }}</span>
+              </td>
+              <td>
+                <span class="badge {% if item.file_type == 'IMAGE' %}bg-primary{% else %}bg-purple text-white{% endif %}" style="{% if item.file_type == 'VIDEO' %}background-color: #7c3aed;{% endif %}">
+                  {{ item.file_type }}
+                </span>
+              </td>
+              <td>
+                {% if item.result == 'REAL' %}
+                  <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">REAL</span>
+                {% elif item.result == 'FAKE' %}
+                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">FAKE</span>
+                {% else %}
+                  <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1">{{ item.result }}</span>
+                {% endif %}
+              </td>
+              <td class="fw-semibold">{% if item.processing_status == 'MODEL_UNAVAILABLE' or item.processing_status == 'NO_FACE' or item.confidence == 0.0 %}N/A{% else %}{{ item.confidence|floatformat:1 }}%{% endif %}</td>
+              <td class="text-muted">{{ item.detected_at|date:"M d, H:i" }}</td>
+              <td class="text-end">
+                <div class="btn-group btn-group-sm">
+                  <a href="{% url 'detection_result' item.id %}" class="btn btn-outline-primary" title="View Result">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  <a href="{% url 'report' item.id %}" class="btn btn-outline-secondary" title="PDF Certificate">
+                    <i class="bi bi-download"></i>
+                  </a>
+                  <form method="POST" action="{% url 'delete_result' item.id %}" onsubmit="return confirm('Delete this record permanently?');" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger" title="Delete record">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // 1. Admin Verdict Chart
+    const verdictCtx = document.getElementById('adminVerdictChart');
+    if (verdictCtx) {
+      new Chart(verdictCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Authentic / Real', 'Deepfake Detected', 'Inconclusive'],
+          datasets: [{
+            data: [{{ total_real }}, {{ total_fake }}, {{ total_no_face }}],
+            backgroundColor: ['#16a34a', '#dc2626', '#f59e0b'],
+            borderWidth: 2,
+            borderColor: '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          cutout: '65%'
+        }
+      });
+    }
+
+    // 2. Format Breakdown Chart
+    const formatCtx = document.getElementById('adminFormatChart');
+    if (formatCtx) {
+      new Chart(formatCtx, {
+        type: 'pie',
+        data: {
+          labels: ['Images', 'Videos'],
+          datasets: [{
+            data: [{{ total_images }}, {{ total_videos }}],
+            backgroundColor: ['#2563eb', '#7c3aed'],
+            borderWidth: 2,
+            borderColor: '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          cutout: '65%'
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

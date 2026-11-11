@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+  
+  <!-- Breadcrumb Navigation -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <a href="{% url 'history' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i> Back to History
+    </a>
+    <div class="d-flex gap-2">
+      <a href="{% url 'report' result.id %}" class="btn btn-primary-blue btn-sm">
+        <i class="bi bi-file-earmark-pdf-fill"></i> Download PDF Report
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    
+    <!-- Left Column: File Inspection & Visual Preview -->
+    <div class="col-lg-5">
+      <div class="custom-card p-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-eye text-primary me-2"></i> Media Visual Inspection</h5>
+        
+        <div class="text-center bg-light rounded-3 p-3 mb-3 border">
+          {% if result.extracted_face %}
+            <h6 class="small text-muted mb-2">Detected Facial Landmark Region:</h6>
+            <img src="{{ result.extracted_face.url }}" alt="Facial Biometric" class="img-fluid rounded border shadow-sm" style="max-height: 220px; object-fit: contain;">
+          {% elif result.file and result.file_type == 'IMAGE' %}
+            <img src="{{ result.file.url }}" alt="Uploaded Image" class="img-fluid rounded border shadow-sm" style="max-height: 220px; object-fit: contain;">
+          {% elif result.file and result.file_type == 'VIDEO' %}
+            <video src="{{ result.file.url }}" controls class="w-100 rounded border" style="max-height: 220px;"></video>
+          {% else %}
+            <div class="py-5 text-muted">
+              <i class="bi bi-file-earmark-x fs-1 text-secondary"></i>
+              <p class="small mb-0 mt-2">Media file unavailable</p>
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="p-3 bg-light rounded-3 small">
+          <div class="d-flex justify-content-between mb-1">
+            <span class="text-muted">Biometric Status:</span>
+            <span class="fw-bold {% if result.face_detected %}text-success{% else %}text-danger{% endif %}">
+              {% if result.face_detected %}Face Found ({{ result.faces_count }}){% else %}No Face Detected{% endif %}
+            </span>
+          </div>
+          <div class="d-flex justify-content-between mb-1">
+            <span class="text-muted">Temporal Samples:</span>
+            <span class="fw-bold text-dark">{{ result.frames_analyzed }} frame(s)</span>
+          </div>
+          <div class="d-flex justify-content-between">
+            <span class="text-muted">Classifier Engine:</span>
+            <span class="fw-bold text-primary">{{ result.model_name }}</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Right Column: Verification Results & Forensic Explanation -->
+    <div class="col-lg-7">
+      <div class="custom-card p-4 p-md-5">
+        
+        <div class="d-flex justify-content-between align-items-start mb-4">
+          <div>
+            <span class="badge bg-light text-muted border px-3 py-1 rounded-pill small mb-2">
+              Scan Record ID: DFS-{{ result.id|stringformat:"06d" }}
+            </span>
+            <h3 class="fw-bold mb-1">{{ result.file_name }}</h3>
+            <span class="text-muted small">Inspected on {{ result.detected_at|date:"F d, Y \a\t H:i:s" }} IST</span>
+          </div>
+          <div>
+            {% if result.processing_status == 'MODEL_UNAVAILABLE' %}
+              <span class="badge-verdict-noface fs-6 px-3 py-2">
+                <i class="bi bi-shield-exclamation me-1"></i> INCONCLUSIVE (MODEL UNAVAILABLE)
+              </span>
+            {% elif result.result == 'REAL' %}
+              <span class="badge-verdict-real fs-6 px-3 py-2">
+                <i class="bi bi-check-circle-fill me-1"></i> LIKELY REAL
+              </span>
+            {% elif result.result == 'FAKE' %}
+              <span class="badge-verdict-fake fs-6 px-3 py-2">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i> LIKELY SYNTHETIC
+              </span>
+            {% else %}
+              <span class="badge-verdict-noface fs-6 px-3 py-2">
+                <i class="bi bi-question-circle-fill me-1"></i> {{ result.result }}
+              </span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Confidence Gauge -->
+        <div class="p-3 bg-light rounded-3 border mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="fw-bold small text-dark">Confidence Level</span>
+            <span class="fw-bold fs-5 {% if result.result == 'REAL' and result.processing_status != 'MODEL_UNAVAILABLE' %}text-success{% elif result.result == 'FAKE' and result.processing_status != 'MODEL_UNAVAILABLE' %}text-danger{% else %}text-muted{% endif %}">
+              {% if result.processing_status == 'MODEL_UNAVAILABLE' or result.processing_status == 'NO_FACE' or result.confidence == 0.0 %}
+                N/A
+              {% else %}
+                {{ result.confidence|floatformat:1 }}%
+              {% endif %}
+            </span>
+          </div>
+          <div class="confidence-track mb-2">
+            <div class="confidence-fill-bar {% if result.result == 'REAL' %}fill-real{% else %}fill-fake{% endif %}" style="width: {% if result.processing_status == 'MODEL_UNAVAILABLE' or result.processing_status == 'NO_FACE' or result.confidence == 0.0 %}0{% else %}{{ result.confidence|floatformat:0 }}{% endif %}%;"></div>
+          </div>
+          <div class="d-flex justify-content-between small text-muted" style="font-size: 11px;">
+            <span>Real Probability: <strong>{% if result.processing_status == 'MODEL_UNAVAILABLE' or result.processing_status == 'NO_FACE' %}—{% else %}{{ result.real_probability }}{% endif %}</strong></span>
+            <span>Fake Probability: <strong>{% if result.processing_status == 'MODEL_UNAVAILABLE' or result.processing_status == 'NO_FACE' %}—{% else %}{{ result.fake_probability }}{% endif %}</strong></span>
+          </div>
+        </div>
+
+        <!-- Detailed Forensic Explanation -->
+        <h5 class="fw-bold mb-3"><i class="bi bi-shield-check text-primary me-2"></i> Result Explanation</h5>
+        <div class="p-3 rounded-3 border mb-4 small {% if result.processing_status == 'MODEL_UNAVAILABLE' %}bg-warning-subtle text-dark border-warning{% else %}bg-light text-secondary{% endif %}">
+          {% if result.processing_status == 'MODEL_UNAVAILABLE' %}
+            <p class="mb-2 fw-bold text-dark">
+              <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i> A validated deepfake classifier is not available.
+            </p>
+            <p class="mb-1">
+              No trained machine learning model file (e.g. <code>deepfake_model.h5</code>) was detected in the <code>model/</code> folder.
+            </p>
+            <p class="mb-0">
+              The application detected <strong>{{ result.faces_count }} face(s)</strong> and recorded supporting forensic indicators, but cannot issue an authoritative Real or Fake verdict without a trained classifier.
+            </p>
+          {% elif result.result == 'REAL' %}
+            <p class="mb-2">
+              <strong>Authenticity Analysis:</strong> The neural network and computer vision filters detected consistent high-frequency spatial skin pores and natural boundary transitions. No synthetic smoothing, GAN checkerboard artifacts, or generative latent inconsistencies were observed.
+            </p>
+            <p class="mb-0">
+              The media exhibits normal optical noise characteristics typical of authentic camera sensor recordings.
+            </p>
+          {% elif result.result == 'FAKE' %}
+            <p class="mb-2">
+              <strong>Deepfake Indicators Found:</strong> The classification pipeline identified high-probability markers of synthetic generation. Common indicators include anomalous blur around the facial bounding box, inconsistent chrominance gradients, or Fourier spectral frequency drop-offs.
+            </p>
+            <p class="mb-0">
+              This media is strongly suspected of containing synthetic or manipulated facial content.
+            </p>
+          {% else %}
+            <p class="mb-0">
+              <strong>Inconclusive Biometrics:</strong> {{ result.error_message|default:"No recognizable face was detected. Please upload another image or video containing a clear face." }}
+            </p>
+          {% endif %}
+        </div>
+
+        <!-- Face & Frame Breakdown -->
+        {% if face_items or result.forensic_details.faces_analysis %}
+        <h6 class="fw-bold mb-2 small text-muted text-uppercase">Face & Frame Breakdown</h6>
+        <div class="table-responsive mb-4">
+          <table class="table table-sm table-bordered small align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Face / Region</th>
+                <th>Bounding Box</th>
+                <th>Prediction</th>
+                <th>Confidence</th>
+                <th>Texture Variance</th>
+                <th>Sensor Noise</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if face_items %}
+                {% for item in face_items %}
+                  <tr>
+                    <td class="fw-semibold text-dark">
+                      {% if item.face_crop %}
+                        <img src="/media/{{ item.face_crop }}" alt="Face #{{ item.face_number }}" class="rounded me-1 border" style="width: 28px; height: 28px; object-fit: cover;">
+                      {% endif %}
+                      Face #{{ item.face_number }}
+                    </td>
+                    <td class="text-muted font-monospace small">({{ item.bounding_box_x }}, {{ item.bounding_box_y }}, {{ item.bounding_box_w }}, {{ item.bounding_box_h }})</td>
+                    <td>
+                      {% if item.label == 'REAL' %}
+                        <span class="badge bg-success-subtle text-success">REAL</span>
+                      {% elif item.label == 'FAKE' %}
+                        <span class="badge bg-danger-subtle text-danger">FAKE</span>
+                      {% else %}
+                        <span class="badge bg-warning-subtle text-warning">UNCERTAIN</span>
+                      {% endif %}
+                    </td>
+                    <td class="fw-bold">{{ item.confidence|floatformat:1 }}%</td>
+                    <td>{{ item.laplacian_variance|floatformat:1 }}</td>
+                    <td>{{ item.noise_estimate|floatformat:2 }}</td>
+                  </tr>
+                {% endfor %}
+              {% else %}
+                {% for f in result.forensic_details.faces_analysis %}
+                  <tr>
+                    <td class="fw-semibold text-dark">{{ f.label }}</td>
+                    <td class="text-muted font-monospace small">Detected Region</td>
+                    <td>
+                      {% if f.model_prediction == 'REAL' %}
+                        <span class="badge bg-success-subtle text-success">REAL</span>
+                      {% elif f.model_prediction == 'FAKE' %}
+                        <span class="badge bg-danger-subtle text-danger">FAKE</span>
+                      {% else %}
+                        <span class="text-muted">UNCERTAIN</span>
+                      {% endif %}
+                    </td>
+                    <td class="fw-bold">{{ f.confidence|default:0|floatformat:1 }}%</td>
+                    <td>{{ f.forensic_signals.laplacian_variance|default:"—" }}</td>
+                    <td>{{ f.forensic_signals.noise_estimate|default:"—" }}</td>
+                  </tr>
+                {% endfor %}
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+        {% endif %}
+
+        <!-- Metadata Table -->
+        <h6 class="fw-bold mb-2 small text-muted text-uppercase">Technical Specifications</h6>
+        <div class="table-responsive mb-4">
+          <table class="table table-sm table-borderless small align-middle mb-0">
+            <tbody>
+              <tr class="border-bottom">
+                <td class="text-muted" style="width: 35%;">Media Type:</td>
+                <td class="fw-semibold text-dark">{{ result.get_file_type_display }} (.{{ result.file_extension }})</td>
+              </tr>
+              <tr class="border-bottom">
+                <td class="text-muted">File Size:</td>
+                <td class="fw-semibold text-dark">{{ result.file_size_mb }} MB</td>
+              </tr>
+              <tr class="border-bottom">
+                <td class="text-muted">Processing Status:</td>
+                <td>
+                  {% if result.processing_status == 'MODEL_UNAVAILABLE' %}
+                    <span class="badge bg-warning-subtle text-warning border border-warning">Model Unavailable</span>
+                  {% elif result.processing_status == 'NO_FACE' %}
+                    <span class="badge bg-warning-subtle text-warning border border-warning">No Face Detected</span>
+                  {% elif result.result == 'REAL' %}
+                    <span class="badge bg-success-subtle text-success border">Completed</span>
+                  {% else %}
+                    <span class="badge bg-primary-subtle text-primary border">{{ result.get_processing_status_display }}</span>
+                  {% endif %}
+                </td>
+              </tr>
+              <tr>
+                <td class="text-muted">Analyzed By:</td>
+                <td class="fw-semibold text-dark">{{ result.user.username }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Action Links -->
+        <div class="d-flex justify-content-between pt-3 border-top">
+          <a href="{% url 'history' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Back to History
+          </a>
+          <a href="{% url 'report' result.id %}" class="btn btn-primary-blue btn-sm">
+            <i class="bi bi-download"></i> Download Report (PDF)
+          </a>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

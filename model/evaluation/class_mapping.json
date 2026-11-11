@@ -1,0 +1,12 @@
+{
+  "model_repository": "pranjal-pravesh/prithivML-deepfake-detector-model-v1",
+  "architecture": "SiglipForImageClassification",
+  "input_tensor_name": "pixel_values",
+  "output_tensor_name": "logits",
+  "class_labels": {
+    "0": "FAKE",
+    "1": "REAL"
+  },
+  "preprocessing": "SigLIP Normalization: (RGB / 255.0 - 0.5) / 0.5 -> [-1.0, 1.0]",
+  "threshold": 0.5
+}

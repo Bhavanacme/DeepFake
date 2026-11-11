@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="text-center max-w-700 mx-auto mb-5">
+    <span class="badge bg-primary-subtle text-primary border px-3 py-2 rounded-pill mb-2">
+      <i class="bi bi-envelope-paper me-1"></i> Get in Touch
+    </span>
+    <h2 class="fw-bold">Contact & Research Support</h2>
+    <p class="text-muted">
+      Have questions regarding the Deepfake Detection System or research integration? Reach out to our project team.
+    </p>
+  </div>
+
+  <div class="row g-4 justify-content-center">
+    <div class="col-lg-5">
+      <div class="custom-card p-4 p-md-5 h-100">
+        <h4 class="fw-bold text-primary mb-3">Project Information</h4>
+        <p class="text-secondary small mb-4">
+          Developed as a Diploma CSE Final-Year Project. Dedicated to media verification, biometric forensics, and generative AI defenses.
+        </p>
+
+        <div class="d-flex align-items-start gap-3 mb-3">
+          <div class="stat-icon-wrapper stat-icon-blue" style="width: 44px; height: 44px; font-size: 1.2rem;">
+            <i class="bi bi-geo-alt"></i>
+          </div>
+          <div>
+            <h6 class="fw-bold mb-0">Department</h6>
+            <span class="small text-muted">Computer Science & Engineering</span>
+          </div>
+        </div>
+
+        <div class="d-flex align-items-start gap-3 mb-3">
+          <div class="stat-icon-wrapper stat-icon-green" style="width: 44px; height: 44px; font-size: 1.2rem;">
+            <i class="bi bi-envelope"></i>
+          </div>
+          <div>
+            <h6 class="fw-bold mb-0">Research Contact</h6>
+            <span class="small text-muted">student@deepfake-detector.edu</span>
+          </div>
+        </div>
+
+        <div class="d-flex align-items-start gap-3 mb-4">
+          <div class="stat-icon-wrapper stat-icon-amber" style="width: 44px; height: 44px; font-size: 1.2rem;">
+            <i class="bi bi-shield-check"></i>
+          </div>
+          <div>
+            <h6 class="fw-bold mb-0">System Version</h6>
+            <span class="small text-muted">v2.1 Neural & Spectral Engine</span>
+          </div>
+        </div>
+
+        <div class="p-3 bg-light rounded-3 border small text-muted">
+          <i class="bi bi-info-circle text-primary me-1"></i> For rapid assistance, test the live detector via the <a href="{% url 'detect' %}" class="fw-semibold text-primary">Detection Page</a>.
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="custom-card p-4 p-md-5 h-100">
+        <h4 class="fw-bold mb-2">Send an Inquiry</h4>
+        <p class="text-muted small mb-4">Fill out the form below and we will respond promptly.</p>
+
+        <form method="POST" action="{% url 'contact' %}">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Your Full Name</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-person"></i></span>
+              <input type="text" name="name" required class="form-control" placeholder="Enter your name" value="{% if user.is_authenticated %}{{ user.get_full_name|default:user.username }}{% endif %}">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Email Address</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-envelope"></i></span>
+              <input type="email" name="email" required class="form-control" placeholder="name@example.com" value="{% if user.is_authenticated %}{{ user.email }}{% endif %}">
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label small fw-semibold">Message / Feedback</label>
+            <textarea name="message" required rows="4" class="form-control" placeholder="Write your message or inquiry here..."></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary-blue w-100 py-2 justify-content-center">
+            <i class="bi bi-send-fill me-1"></i> Send Inquiry
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

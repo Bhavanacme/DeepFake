@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+  
+  <!-- Page Header -->
+  <div class="text-center max-w-700 mx-auto mb-5">
+    <span class="badge bg-primary-subtle text-primary border px-3 py-2 rounded-pill mb-2">
+      <i class="bi bi-info-circle me-1"></i> Project Documentation & Background
+    </span>
+    <h2 class="fw-bold">About Deepfake Detection System</h2>
+    <p class="text-muted">
+      A comprehensive AI-driven forensic platform built for Diploma CSE Final-Year Project Demonstration.
+    </p>
+  </div>
+
+  <!-- Project Objective Card -->
+  <div class="custom-card p-4 p-md-5 mb-5">
+    <div class="row align-items-center g-4">
+      <div class="col-lg-7">
+        <h4 class="fw-bold text-primary mb-3">Project Objective & Purpose</h4>
+        <p class="text-secondary leading-relaxed">
+          The primary objective of the <strong>Deepfake Detection System</strong> is to engineer a dependable, secure, and accessible platform that detects whether uploaded images and videos are authentic or artificially manipulated using deep learning.
+        </p>
+        <p class="text-secondary leading-relaxed">
+          As generative AI technologies (such as GANs, Diffusion Models, FaceSwap, and autoencoders) rapidly evolve, hyper-realistic synthesized videos can be generated with minimal effort. This project addresses the critical need for automated digital media verification, safeguarding personal authenticity, news credibility, and financial KYC systems.
+        </p>
+      </div>
+      <div class="col-lg-5">
+        <div class="p-4 bg-light rounded-3 border text-center">
+          <div class="brand-icon mx-auto mb-3" style="width: 60px; height: 60px; font-size: 1.8rem;">
+            <i class="bi bi-mortarboard-fill"></i>
+          </div>
+          <h5 class="fw-bold mb-1">Final Year CSE Project</h5>
+          <p class="text-muted small mb-3">Diploma in Computer Science & Engineering</p>
+          <div class="d-flex justify-content-center gap-2">
+            <span class="badge bg-primary">AI / ML</span>
+            <span class="badge bg-success">Computer Vision</span>
+            <span class="badge bg-dark">Web Security</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tech Stack Grid -->
+  <h4 class="fw-bold mb-4 text-center">Technology Stack & Architecture</h4>
+  <div class="row g-4 mb-5">
+    <div class="col-md-6 col-lg-3">
+      <div class="custom-card p-4 text-center h-100">
+        <div class="stat-icon-wrapper stat-icon-blue mx-auto mb-3">
+          <i class="bi bi-filetype-html"></i>
+        </div>
+        <h6 class="fw-bold">Frontend</h6>
+        <p class="text-muted small mb-0">HTML5, CSS3, Bootstrap 5.3, JavaScript, Responsive Grid, Chart.js</p>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+      <div class="custom-card p-4 text-center h-100">
+        <div class="stat-icon-wrapper stat-icon-green mx-auto mb-3">
+          <i class="bi bi-filetype-py"></i>
+        </div>
+        <h6 class="fw-bold">Backend & DB</h6>
+        <p class="text-muted small mb-0">Python 3.14, Django 6.1 Framework, SQLite (MySQL-ready structure)</p>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+      <div class="custom-card p-4 text-center h-100">
+        <div class="stat-icon-wrapper stat-icon-amber mx-auto mb-3">
+          <i class="bi bi-camera"></i>
+        </div>
+        <h6 class="fw-bold">Computer Vision</h6>
+        <p class="text-muted small mb-0">OpenCV 5.0, Haar Cascade Classifier, Frame Extraction, Crop Normalization</p>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+      <div class="custom-card p-4 text-center h-100">
+        <div class="stat-icon-wrapper stat-icon-red mx-auto mb-3">
+          <i class="bi bi-cpu"></i>
+        </div>
+        <h6 class="fw-bold">Deep Learning</h6>
+        <p class="text-muted small mb-0">TensorFlow/Keras CNN Model Pipeline, 2D FFT Spectral & Texture Analysis</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Importance & Role Cards -->
+  <div class="row g-4 mb-5">
+    <div class="col-lg-6">
+      <div class="custom-card p-4 h-100">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="stat-icon-wrapper stat-icon-blue">
+            <i class="bi bi-shield-check"></i>
+          </div>
+          <h5 class="fw-bold mb-0">The Role of AI & Machine Learning</h5>
+        </div>
+        <p class="text-muted small leading-relaxed">
+          Deep learning models extract hierarchical representations ranging from low-level pixel noise to high-level facial landmarks. Unlike human observers who can be easily deceived by seamless video blending, convolutional neural networks identify subtle mathematical inconsistencies such as unnatural eye blink frequencies, color channel misalignments, and frequency domain cutoff anomalies.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="custom-card p-4 h-100">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="stat-icon-wrapper stat-icon-green">
+            <i class="bi bi-lock"></i>
+          </div>
+          <h5 class="fw-bold mb-0">Security & Media Authenticity</h5>
+        </div>
+        <p class="text-muted small leading-relaxed">
+          Authenticity verification is a cornerstone of modern cybersecurity. By combining automated facial extraction with verifiable cryptographic hash tracking, tamper audit trails, and exportable PDF certificates, our system delivers a robust chain-of-evidence framework suitable for educational and institutional deployments.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Call to Action Banner -->
+  <div class="p-4 bg-light rounded-3 border text-center">
+    <h5 class="fw-bold mb-2">Experience the Detection Pipeline</h5>
+    <p class="text-muted small mb-3">Upload a test photo or video to verify its authenticity right now.</p>
+    <a href="{% url 'detect' %}" class="btn btn-primary-blue btn-sm px-4 py-2">
+      <i class="bi bi-cloud-arrow-up me-1"></i> Scan Media File
+    </a>
+  </div>
+
+</div>
+{% endblock %}

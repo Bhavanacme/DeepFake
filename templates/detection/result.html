@@ -1,0 +1,595 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+  
+  <!-- Navigation Header / Breadcrumbs -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <a href="{% url 'history' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Back to History
+      </a>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{% url 'detect' %}" class="btn btn-outline-blue btn-sm">
+        <i class="bi bi-plus-circle"></i> Analyze Another
+      </a>
+      <a href="{% url 'report' result.id %}" class="btn btn-primary-blue btn-sm">
+        <i class="bi bi-file-earmark-pdf-fill"></i> Download Report
+      </a>
+    </div>
+  </div>
+
+  <!-- Main Three-Column Result Card -->
+  <div class="result-section-box mb-5">
+    
+    <div class="d-flex justify-content-between align-items-center pb-3 mb-4 border-bottom">
+      <div>
+        <span class="badge bg-light text-muted border px-3 py-1 rounded-pill small">
+          Reference #DFS-{{ result.id|stringformat:"06d" }}
+        </span>
+      </div>
+      <div>
+        <span class="badge bg-primary-subtle text-primary border px-3 py-1 rounded-pill small">
+          {{ result.model_name }}
+        </span>
+      </div>
+    </div>
+
+    <div class="row g-4 align-items-stretch">
+      
+      <!-- =====================================================================
+           COLUMN 1 (LEFT): Media Preview & Biometric Landmarks
+           ===================================================================== -->
+      <div class="col-lg-4">
+        <div class="result-column-card">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0 text-dark">
+              <i class="bi bi-eye text-primary me-1"></i> Media Preview
+            </h6>
+            <span class="badge bg-light text-dark border small">Analyzed Frame</span>
+          </div>
+
+          <!-- Media Display Box -->
+          <div class="text-center p-3 bg-light rounded-3 border mb-3 position-relative" style="min-height: 220px; display: flex; align-items: center; justify-content: center;">
+            {% if result.extracted_face %}
+              <img src="{{ result.extracted_face.url }}" alt="Detected Face Crop" class="img-fluid rounded border shadow-sm" style="max-height: 210px; object-fit: contain;">
+            {% elif result.file and result.file_type == 'IMAGE' %}
+              <img src="{{ result.file.url }}" alt="Uploaded Image" class="img-fluid rounded border shadow-sm" style="max-height: 210px; object-fit: contain;">
+            {% elif result.file and result.file_type == 'VIDEO' %}
+              <video src="{{ result.file.url }}" controls class="w-100 rounded border" style="max-height: 210px;"></video>
+            {% else %}
+              <div class="p-4 text-muted small">
+                <i class="bi bi-image fs-1 text-secondary opacity-50 d-block mb-1"></i>
+                No Preview Available
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Preview Telemetry -->
+          <div class="small text-muted">
+            <div class="d-flex justify-content-between py-1 border-bottom">
+              <span>Face Status:</span>
+              <strong class="{% if result.face_detected %}text-success{% else %}text-danger{% endif %}">
+                {% if result.face_detected %}{{ result.faces_count }} Face(s) Found{% else %}No Face Detected{% endif %}
+              </strong>
+            </div>
+            <div class="d-flex justify-content-between py-1">
+              <span>Examined Samples:</span>
+              <strong class="text-dark">{{ result.frames_analyzed }} Frame(s)</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =====================================================================
+           COLUMN 2 (CENTER): Detection Verdict & Confidence Gauge
+           ===================================================================== -->
+      <div class="col-lg-4">
+        <div class="result-column-card text-center d-flex flex-column justify-content-between">
+          <div>
+            <span class="text-muted small text-uppercase fw-semibold tracking-wider d-block mb-3">
+              {% if result.processing_status == 'MODEL_UNAVAILABLE' %}
+                Model Status: Unavailable
+              {% elif result.forensic_details.is_heuristic %}
+                Forensic Estimate
+              {% else %}
+                Model Prediction
+              {% endif %}
+            </span>
+
+            <!-- Verdict Card Display -->
+            {% if result.processing_status == 'MODEL_UNAVAILABLE' %}
+              <div class="verdict-badge-box verdict-box-noface">
+                <i class="bi bi-shield-exclamation fs-3 d-block mb-1 text-warning"></i>
+                <div class="fs-4 text-warning">ANALYSIS INCONCLUSIVE</div>
+                <small class="fw-normal text-muted">Model Unavailable</small>
+              </div>
+            {% elif result.result == 'REAL' %}
+              <div class="verdict-badge-box verdict-box-real">
+                <i class="bi bi-check-circle-fill fs-3 d-block mb-1"></i>
+                <div class="fs-4">LIKELY REAL</div>
+                <small class="fw-normal">{% if result.forensic_details.is_heuristic %}Forensic Signals Lean Real{% else %}Model Classified as Real{% endif %}</small>
+              </div>
+            {% elif result.result == 'FAKE' %}
+              <div class="verdict-badge-box verdict-box-fake">
+                <i class="bi bi-exclamation-triangle-fill fs-3 d-block mb-1"></i>
+                <div class="fs-4">LIKELY DEEPFAKE</div>
+                <small class="fw-normal">{% if result.forensic_details.is_heuristic %}Forensic Anomalies Detected{% else %}Face-Swap / Manipulation Detected{% endif %}</small>
+              </div>
+            {% elif result.result == 'AI_GENERATED' %}
+              <div class="verdict-badge-box verdict-box-ai-gen">
+                <i class="bi bi-cpu-fill fs-3 d-block mb-1"></i>
+                <div class="fs-4">LIKELY AI-GENERATED</div>
+                <small class="fw-normal">Detected as Fully Synthetic Image</small>
+              </div>
+            {% else %}
+              <div class="verdict-badge-box verdict-box-noface">
+                <i class="bi bi-question-circle-fill fs-3 d-block mb-1"></i>
+                <div class="fs-4">ANALYSIS INCONCLUSIVE</div>
+                <small class="fw-normal">{% if result.processing_status == 'NO_FACE' %}No Face Detected{% else %}Inconclusive Biometrics{% endif %}</small>
+              </div>
+            {% endif %}
+
+            <!-- Confidence Readout -->
+            <div class="mb-3">
+              <span class="text-muted small d-block">Confidence Score</span>
+              {% if result.processing_status == 'MODEL_UNAVAILABLE' or result.processing_status == 'NO_FACE' or result.processing_status == 'FAILED' or result.confidence == 0.0 %}
+                <h2 class="fw-bold mb-2 text-warning">N/A</h2>
+                <div class="confidence-track mb-2">
+                  <div class="confidence-fill-bar fill-fake" style="width: 0%;"></div>
+                </div>
+                <div class="d-flex justify-content-between small text-muted">
+                  <span>Real: <strong>—</strong></span>
+                  <span>Fake: <strong>—</strong></span>
+                </div>
+              {% else %}
+                <h2 class="fw-bold mb-2 {% if result.result == 'REAL' %}text-success{% elif result.result == 'FAKE' %}text-danger{% elif result.result == 'AI_GENERATED' %}text-ai-gen{% else %}text-warning{% endif %}">
+                  {{ result.confidence|floatformat:1 }}%
+                </h2>
+                <!-- Smooth Progress Bar -->
+                <div class="confidence-track mb-2">
+                  <div class="confidence-fill-bar {% if result.result == 'REAL' %}fill-real{% elif result.result == 'FAKE' %}fill-fake{% elif result.result == 'AI_GENERATED' %}fill-ai-gen{% else %}fill-fake{% endif %}"
+                       data-width="{{ result.confidence|floatformat:0 }}%"
+                       style="width: 0%;">
+                  </div>
+                </div>
+                <div class="d-flex justify-content-between small text-muted">
+                  {% if result.result == 'AI_GENERATED' %}
+                    <span>AI-Gen: <strong>{{ result.ai_generated_probability|floatformat:3 }}</strong></span>
+                    <span>Real: <strong>{{ result.real_probability|floatformat:3 }}</strong></span>
+                  {% else %}
+                    <span>Real: <strong>{{ result.real_probability|floatformat:3 }}</strong></span>
+                    <span>Fake: <strong>{{ result.fake_probability|floatformat:3 }}</strong></span>
+                  {% endif %}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Engine / disclaimer box -->
+          <div class="p-3 rounded-2 small border text-start {% if result.processing_status == 'MODEL_UNAVAILABLE' or result.forensic_details.is_heuristic %}bg-warning-subtle text-dark border-warning{% elif result.result == 'AI_GENERATED' %}bg-ai-gen-subtle border-ai-gen{% else %}bg-light text-muted{% endif %}">
+            {% if result.processing_status == 'MODEL_UNAVAILABLE' %}
+              <div class="fw-bold mb-1 text-dark">
+                <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i> A validated deepfake classifier is not available.
+              </div>
+              <p class="mb-1">
+                No trained machine learning model (e.g. <code>deepfake_model.h5</code>) was detected in the <code>model/</code> folder.
+              </p>
+              <p class="mb-0">
+                The application detected <strong>{{ result.faces_count }} face(s)</strong> and recorded supporting forensic indicators below, but cannot issue an authoritative Real or Fake verdict without a trained classifier.
+              </p>
+            {% elif result.forensic_details.is_heuristic %}
+              <i class="bi bi-exclamation-triangle text-warning me-1"></i>
+              <strong>Heuristic estimate only.</strong>
+              No trained CNN model was loaded. Results are based on computer-vision forensic signals and
+              <strong>cannot reliably detect modern AI-generated portraits.</strong>
+            {% elif result.result == 'AI_GENERATED' %}
+              <i class="bi bi-cpu-fill text-ai-gen me-1"></i>
+              <strong>AI-generated image detected</strong> with {{ result.confidence|floatformat:1 }}% confidence.<br>
+              The AI-gen whole-image classifier flagged this image as fully synthetic.
+              The deepfake face-swap detector ran independently on the detected face(s).<br>
+              <span class="text-muted">Note: This score is a probabilistic estimate. Modern AI-generated images may evade detection.</span>
+            {% elif result.result == 'REAL' %}
+              CNN model classified this media as authentic with {{ result.confidence|floatformat:1 }}% confidence.
+            {% elif result.result == 'FAKE' %}
+              CNN model detected synthetic or manipulated facial content with {{ result.confidence|floatformat:1 }}% confidence.
+            {% else %}
+              Forensic signals were too ambiguous to produce a reliable verdict.
+              Please upload another image with a clear, well-lit face.
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- =====================================================================
+           COLUMN 3 (RIGHT): File Details & Direct Action Buttons
+           ===================================================================== -->
+      <div class="col-lg-4">
+        <div class="result-column-card d-flex flex-column justify-content-between">
+          <div>
+            <h6 class="fw-bold mb-3 text-dark">
+              <i class="bi bi-file-earmark-text text-primary me-1"></i> File Details
+            </h6>
+
+            <table class="table table-sm table-borderless small mb-4">
+              <tbody>
+                <tr class="border-bottom">
+                  <td class="text-muted py-2" style="width: 38%;">File Name:</td>
+                  <td class="fw-semibold text-dark py-2 text-truncate" style="max-width: 160px;">
+                    {{ result.file_name }}
+                  </td>
+                </tr>
+                <tr class="border-bottom">
+                  <td class="text-muted py-2">Media Type:</td>
+                  <td class="py-2">
+                    <span class="badge {% if result.file_type == 'IMAGE' %}bg-primary{% else %}bg-purple text-white{% endif %}" style="{% if result.file_type == 'VIDEO' %}background-color: #7c3aed;{% endif %}">
+                      {{ result.get_file_type_display }} (.{{ result.file_extension }})
+                    </span>
+                  </td>
+                </tr>
+                <tr class="border-bottom">
+                  <td class="text-muted py-2">File Size:</td>
+                  <td class="fw-semibold text-dark py-2">{{ result.file_size_mb }} MB</td>
+                </tr>
+                <tr class="border-bottom">
+                  <td class="text-muted py-2">Analyzed On:</td>
+                  <td class="fw-semibold text-dark py-2">{{ result.detected_at|date:"M d, Y, H:i" }}</td>
+                </tr>
+                <tr>
+                  <td class="text-muted py-2">Status:</td>
+                  <td class="py-2">
+                    {% if result.processing_status == 'MODEL_UNAVAILABLE' %}
+                      <span class="badge bg-warning-subtle text-warning border border-warning">Model Unavailable</span>
+                    {% elif result.processing_status == 'NO_FACE' %}
+                      <span class="badge bg-warning-subtle text-warning border border-warning">No Face Detected</span>
+                    {% elif result.result == 'REAL' %}
+                      <span class="badge bg-success-subtle text-success border">Completed</span>
+                    {% else %}
+                      <span class="badge bg-primary-subtle text-primary border">{{ result.get_processing_status_display }}</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Buttons -->
+          <div>
+            <a href="{% url 'report' result.id %}" class="btn btn-primary-blue w-100 py-2 justify-content-center mb-2 shadow-sm">
+              <i class="bi bi-download"></i> Download Report (PDF)
+            </a>
+            <a href="{% url 'detect' %}" class="btn btn-outline-blue w-100 py-2 justify-content-center">
+              <i class="bi bi-arrow-repeat"></i> Analyze Another File
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- =========================================================
+       DUAL-MODEL SIGNAL PANEL
+       Shows both AI-gen detector and deepfake detector signals
+       ========================================================= -->
+  <div class="custom-card p-4 mb-4 shadow-sm">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-bold mb-0">
+        <i class="bi bi-shield-shaded text-primary me-2"></i> Detection Model Signals
+      </h5>
+      <span class="badge bg-primary-subtle text-primary border px-3 py-1 rounded-pill small">
+        Dual-Model Analysis
+      </span>
+    </div>
+    <p class="text-muted small mb-3">
+      This system runs two independent AI models. Each model addresses a different type of image manipulation.
+      Neither model is infallible — always interpret scores as probabilistic estimates.
+    </p>
+    <div class="row g-3">
+
+      <!-- AI-Generated Image Detector -->
+      <div class="col-md-6">
+        <div class="p-3 rounded-3 border {% if result.result == 'AI_GENERATED' %}border-ai-gen bg-ai-gen-subtle{% else %}bg-light{% endif %}">
+          <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-cpu-fill me-2 {% if result.ai_gen_model_available %}text-ai-gen{% else %}text-muted{% endif %} fs-5"></i>
+            <div>
+              <div class="fw-semibold small">AI-Generated Image Detector</div>
+              <div class="text-muted" style="font-size: 0.72rem;">Whole-image classification (no face required)</div>
+            </div>
+          </div>
+          {% if result.ai_gen_model_available %}
+            <div class="d-flex justify-content-between small mb-1">
+              <span class="text-muted">AI-Gen Probability:</span>
+              <strong class="{% if result.result == 'AI_GENERATED' %}text-ai-gen{% else %}text-dark{% endif %}">
+                {{ result.ai_generated_probability|floatformat:3 }}
+              </strong>
+            </div>
+            <div class="progress mb-2" style="height: 6px;">
+              <div class="progress-bar {% if result.result == 'AI_GENERATED' %}bg-ai-gen{% else %}bg-secondary{% endif %}"
+                   role="progressbar"
+                   style="width: {% widthratio result.ai_generated_probability 1 100 %}%">
+              </div>
+            </div>
+            <div class="small">
+              Verdict:
+              {% if result.forensic_details.ai_gen_result.prediction == 'AI_GENERATED' %}
+                <span class="badge bg-ai-gen text-white ms-1">AI-GENERATED</span>
+              {% elif result.forensic_details.ai_gen_result.prediction == 'REAL' %}
+                <span class="badge bg-success ms-1">REAL</span>
+              {% elif result.forensic_details.ai_gen_result.prediction == 'UNCERTAIN' %}
+                <span class="badge bg-warning text-dark ms-1">UNCERTAIN</span>
+              {% else %}
+                <span class="badge bg-secondary ms-1">N/A</span>
+              {% endif %}
+            </div>
+            <div class="text-muted mt-1" style="font-size: 0.71rem;">{{ result.ai_gen_model_name|truncatechars:60 }}</div>
+          {% else %}
+            <div class="text-muted small">
+              <i class="bi bi-info-circle me-1"></i>
+              AI-gen detector not available.
+              {% if result.file_type == 'VIDEO' %}
+                (AI-gen detection is skipped for video — only deepfake face analysis is run.)
+              {% else %}
+                Download the model: <code>python manage.py shell -c "from detection.ai_gen_model import download_ai_gen_model; download_ai_gen_model()"</code>
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Deepfake / Face-Swap Detector -->
+      <div class="col-md-6">
+        <div class="p-3 rounded-3 border {% if result.result == 'FAKE' %}border-danger bg-danger-subtle{% elif result.result == 'REAL' and result.forensic_details.model_available %}border-success bg-success-subtle{% else %}bg-light{% endif %}">
+          <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-person-bounding-box me-2 {% if result.forensic_details.model_available %}text-primary{% else %}text-muted{% endif %} fs-5"></i>
+            <div>
+              <div class="fw-semibold small">Deepfake / Face-Swap Detector</div>
+              <div class="text-muted" style="font-size: 0.72rem;">Face-crop analysis (SigLIP ONNX model)</div>
+            </div>
+          </div>
+          {% if result.forensic_details.model_available %}
+            <div class="d-flex justify-content-between small mb-1">
+              <span class="text-muted">Fake Probability:</span>
+              <strong class="{% if result.result == 'FAKE' %}text-danger{% else %}text-dark{% endif %}">
+                {{ result.fake_probability|floatformat:3 }}
+              </strong>
+            </div>
+            <div class="progress mb-2" style="height: 6px;">
+              <div class="progress-bar {% if result.fake_probability > 0.55 %}bg-danger{% elif result.fake_probability < 0.45 %}bg-success{% else %}bg-warning{% endif %}"
+                   role="progressbar"
+                   style="width: {% widthratio result.fake_probability 1 100 %}%">
+              </div>
+            </div>
+            <div class="small">
+              Verdict:
+              {% if result.result == 'FAKE' %}
+                <span class="badge bg-danger ms-1">FAKE / DEEPFAKE</span>
+              {% elif result.result == 'REAL' %}
+                <span class="badge bg-success ms-1">REAL</span>
+              {% elif result.result == 'AI_GENERATED' %}
+                <span class="badge bg-secondary ms-1">{{ result.forensic_details.ai_gen_result.prediction|default:"N/A" }}</span>
+              {% else %}
+                <span class="badge bg-warning text-dark ms-1">UNCERTAIN</span>
+              {% endif %}
+            </div>
+            <div class="text-muted mt-1" style="font-size: 0.71rem;">Faces analyzed: {{ result.faces_count }}</div>
+          {% else %}
+            <div class="text-muted small">
+              <i class="bi bi-info-circle me-1"></i>
+              Deepfake model unavailable. Place <code>deepfake_detector_v1.onnx</code> in <code>model/</code>.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+    </div><!-- /row -->
+
+    <!-- Combined Verdict Explanation -->
+    {% if result.uncertainty_reason %}
+    <div class="mt-3 p-2 rounded bg-light border small text-muted">
+      <i class="bi bi-info-circle me-1"></i>
+      <strong>Combined verdict reasoning:</strong> {{ result.uncertainty_reason|truncatechars:400 }}
+    </div>
+    {% endif %}
+
+    <!-- Disclaimer -->
+    <div class="mt-3 alert alert-light border small py-2 mb-0">
+      <i class="bi bi-shield-exclamation text-warning me-1"></i>
+      <strong>Important:</strong> These scores are <em>probabilistic estimates from pre-trained models</em>.
+      They are not a certified guarantee or legal proof of authenticity.
+      Modern high-quality AI-generated images and deepfakes may evade both detectors.
+      Always corroborate automated predictions with additional human review for critical decisions.
+    </div>
+  </div>
+
+  <!-- Face & Frame Breakdown Card -->
+  {% if face_items or result.forensic_details.faces_analysis %}
+  <div class="custom-card p-4 mb-4 shadow-sm">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h5 class="fw-bold mb-1">
+          <i class="bi bi-people-fill text-primary me-2"></i> Face & Frame Analysis Breakdown
+        </h5>
+        <span class="text-muted small">Individual biometric and model evaluation for each analyzed face region.</span>
+      </div>
+      <span class="badge bg-primary-subtle text-primary border px-3 py-1 rounded-pill small">
+        {% if face_items %}{{ face_items|length }}{% else %}{{ result.faces_count }}{% endif %} Region(s) Evaluated
+      </span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-bordered table-sm small align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Face / Region</th>
+            <th>Bounding Box</th>
+            {% if result.file_type == 'VIDEO' %}<th>Frame / Timestamp</th>{% endif %}
+            <th>Model Prediction</th>
+            <th>Score</th>
+            <th>Texture Variance</th>
+            <th>Sensor Noise</th>
+            <th>Frequency Energy</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if face_items %}
+            {% for item in face_items %}
+              <tr>
+                <td class="fw-bold text-dark">
+                  {% if item.face_crop %}
+                    <img src="/media/{{ item.face_crop }}" alt="Face #{{ item.face_number }}" class="rounded me-2 border" style="width: 34px; height: 34px; object-fit: cover;">
+                  {% endif %}
+                  Face #{{ item.face_number }}
+                </td>
+                <td class="text-muted font-monospace small">({{ item.bounding_box_x }}, {{ item.bounding_box_y }}, {{ item.bounding_box_w }}, {{ item.bounding_box_h }})</td>
+                {% if result.file_type == 'VIDEO' %}
+                  <td>Frame {{ item.frame_number }} ({{ item.frame_timestamp|floatformat:2 }}s)</td>
+                {% endif %}
+                <td>
+                  {% if item.label == 'REAL' %}
+                    <span class="badge bg-success-subtle text-success border border-success-subtle">REAL</span>
+                  {% elif item.label == 'FAKE' %}
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle">FAKE</span>
+                  {% else %}
+                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle">UNCERTAIN</span>
+                  {% endif %}
+                </td>
+                <td class="fw-semibold">
+                  {% if item.confidence and item.confidence > 0 %}
+                    {{ item.confidence|floatformat:1 }}%
+                  {% else %}
+                    <span class="text-muted">—</span>
+                  {% endif %}
+                </td>
+                <td>{{ item.laplacian_variance|floatformat:1 }}</td>
+                <td>{{ item.noise_estimate|floatformat:2 }}</td>
+                <td>{{ item.frequency_energy|floatformat:1 }}</td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            {% for f in result.forensic_details.faces_analysis %}
+              <tr>
+                <td class="fw-bold text-dark">
+                  <i class="bi bi-person-bounding-box me-1 text-primary"></i> {{ f.label }}
+                </td>
+                <td class="text-muted font-monospace small">Detected Region</td>
+                {% if result.file_type == 'VIDEO' %}
+                  <td>Frame {{ f.frame_number|default:1 }}</td>
+                {% endif %}
+                <td>
+                  {% if f.model_prediction == 'REAL' %}
+                    <span class="badge bg-success-subtle text-success border border-success-subtle">REAL</span>
+                  {% elif f.model_prediction == 'FAKE' %}
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle">FAKE</span>
+                  {% else %}
+                    <span class="badge bg-light text-muted border">UNCERTAIN</span>
+                  {% endif %}
+                </td>
+                <td class="fw-semibold">
+                  {% if f.confidence and f.confidence > 0 %}
+                    {{ f.confidence|floatformat:1 }}%
+                  {% else %}
+                    <span class="text-muted">—</span>
+                  {% endif %}
+                </td>
+                <td>{{ f.forensic_signals.laplacian_variance|default:"—" }}</td>
+                <td>{{ f.forensic_signals.noise_estimate|default:"—" }}</td>
+                <td>{{ f.forensic_signals.frequency_energy|default:"—" }}</td>
+              </tr>
+            {% endfor %}
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Detailed Forensic Telemetry Table -->
+  <div class="custom-card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-bold mb-0">
+        <i class="bi bi-cpu text-primary me-2"></i> Detailed Forensic Indicators
+      </h5>
+      <span class="badge {% if result.forensic_details.is_heuristic %}bg-warning-subtle text-warning border border-warning{% else %}bg-primary-subtle text-primary border{% endif %}">
+        {% if result.forensic_details.is_heuristic %}Heuristic Engine{% else %}CNN Model{% endif %}
+      </span>
+    </div>
+
+    {% if result.forensic_details.is_heuristic %}
+    <div class="alert alert-warning small py-2 mb-3">
+      <i class="bi bi-info-circle me-1"></i>
+      <strong>These are supporting forensic signals, not a definitive classification.</strong>
+      They are displayed for academic transparency. No trained CNN deepfake classifier is loaded.
+      The signals below are approximate heuristics that <strong>do not reliably distinguish modern
+      AI-generated portraits from real photographs.</strong>
+    </div>
+    {% endif %}
+    
+    <div class="table-responsive">
+      <table class="table table-bordered table-sm small align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Forensic Signal</th>
+            <th>Measured Value</th>
+            <th>Interpretation (approximate)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Laplacian Texture Variance</strong></td>
+            <td class="fw-bold text-primary">
+              {{ result.forensic_details.laplacian_sharpness_var|default:"N/A" }}
+            </td>
+            <td class="text-muted">Low (&lt;50) = possibly blurry/synthetic; moderate–high = ambiguous (real and AI both possible)</td>
+          </tr>
+          <tr>
+            <td><strong>Local Patch Texture Std</strong></td>
+            <td class="fw-bold text-primary">
+              {{ result.forensic_details.local_patch_texture_std|default:"N/A" }}
+            </td>
+            <td class="text-muted">Low (&lt;8) = overly smooth (AI-likely); high (&gt;25) = natural micro-texture (real-likely)</td>
+          </tr>
+          <tr>
+            <td><strong>Noise Residual Estimate</strong></td>
+            <td class="fw-bold text-primary">
+              {{ result.forensic_details.noise_residual_estimate|default:"N/A" }}
+            </td>
+            <td class="text-muted">Camera images: typically 10–50+; AI-generated: often 2–12 (cleaner)</td>
+          </tr>
+          <tr>
+            <td><strong>2D FFT High-Frequency Energy</strong></td>
+            <td class="fw-bold text-primary">
+              {{ result.forensic_details.high_frequency_energy|default:"N/A" }}
+            </td>
+            <td class="text-muted">Measures spectral content; ranges overlap significantly between real and AI images</td>
+          </tr>
+          <tr>
+            <td><strong>ELA Compression Score</strong></td>
+            <td class="fw-bold text-primary">
+              {{ result.forensic_details.ela_compression_score|default:"N/A" }}
+            </td>
+            <td class="text-muted">Error Level Analysis proxy — higher values may indicate inconsistent compression</td>
+          </tr>
+          <tr>
+            <td><strong>Chroma Space Disparity (YCbCr)</strong></td>
+            <td class="fw-bold text-primary">
+              {{ result.forensic_details.chroma_space_disparity|default:"N/A" }}
+            </td>
+            <td class="text-muted">Chrominance channel variation; very low (&lt;8) = uniform skin tone (possibly AI)</td>
+          </tr>
+          <tr>
+            <td><strong>Analysis Engine</strong></td>
+            <td colspan="2" class="text-muted">
+              {{ result.forensic_details.engine|default:result.model_name }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

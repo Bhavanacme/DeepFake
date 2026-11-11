@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Media & User Uploads (Privacy)
+media/uploads/*
+media/processed/*
+!media/uploads/.gitkeep
+!media/processed/.gitkeep
+
+# Large Pretrained Models (>100MB)
+model/*.onnx
+!model/deepfake_detector_v1.onnx
+!model/deepfake_model.onnx
+!model/face_detection_yunet_2023mar.onnx
+
+# OS & IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Backup and compressed files
+*.backup
+*.zip
+
+# Generated static files
+staticfiles/
+
+# Test datasets and sample media
+test_dataset/
+sample_media/
+sample_images/
+
+db.sqlite3.backup*

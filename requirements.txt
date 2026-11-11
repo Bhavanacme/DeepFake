@@ -1,0 +1,11 @@
+Django>=5.1.0
+opencv-python>=4.8.0
+numpy>=1.24.0
+Pillow>=10.0.0
+reportlab>=4.0.0
+onnxruntime>=1.18.0
+onnx>=1.15.0
+huggingface_hub>=0.23.0
+matplotlib>=3.8.0
+# Optional for loading pre-trained .h5 Keras deep learning models (Python <= 3.12):
+# tensorflow>=2.15.0

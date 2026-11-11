@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-9">
+      
+      <!-- Upload Card Matching Reference Design -->
+      <div class="upload-main-card">
+        <div class="text-center mb-4">
+          <span class="badge bg-primary-subtle text-primary border px-3 py-1 rounded-pill small mb-2 fw-semibold">
+            <i class="bi bi-shield-check me-1"></i> Media Authenticity Verification
+          </span>
+          <h2 class="fw-bold mb-1">Upload Image or Video</h2>
+          <p class="text-muted small">Drag and drop your file here or choose from your device.</p>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" id="uploadForm" action="{% url 'detect' %}">
+          {% csrf_token %}
+          
+          <!-- Hidden File Input -->
+          <input type="file" name="file" id="mediaFileInput" class="d-none" accept=".jpg,.jpeg,.png,.mp4,.avi,.mov,.mkv" required>
+
+          <!-- Large Dashed Upload Box -->
+          <div class="upload-dropzone-box mb-4" id="uploadDropzone">
+            <div class="upload-cloud-icon-circle">
+              <i class="bi bi-cloud-arrow-up"></i>
+            </div>
+            
+            <h5 class="fw-bold mb-1 text-dark">Drag & Drop your file here</h5>
+            <div class="text-muted small my-2">or</div>
+            
+            <button type="button" class="btn btn-outline-blue btn-sm px-4 mb-3" onclick="document.getElementById('mediaFileInput').click();">
+              <i class="bi bi-folder2-open me-1"></i> Choose File
+            </button>
+
+            <div class="text-muted small">
+              Supported formats: <strong class="text-dark">JPG, PNG, JPEG, MP4, MOV</strong> &bull; Max size: <strong class="text-dark">50 MB</strong>
+            </div>
+          </div>
+
+          <!-- Dynamic Selected File Info Card -->
+          <div class="selected-file-info p-3 bg-light border rounded-3 mb-4 d-none">
+            <div class="d-flex align-items-center gap-3">
+              <img src="#" alt="Preview" class="preview-thumbnail-img rounded border d-none" style="width: 58px; height: 58px; object-fit: cover;">
+              <div class="flex-grow-1 overflow-hidden">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <span class="selected-file-type-badge badge bg-primary">IMAGE</span>
+                  <span class="selected-file-name fw-bold text-truncate text-dark small d-block">filename.jpg</span>
+                </div>
+                <div class="small text-muted">
+                  Size: <strong class="selected-file-size text-dark">0 MB</strong>
+                </div>
+              </div>
+              <div>
+                <button type="button" class="btn btn-sm btn-outline-danger btn-remove-selected-file">
+                  <i class="bi bi-x-circle me-1"></i> Remove
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notice -->
+          <div class="alert alert-info border-0 d-flex align-items-center gap-2 mb-4 py-2" style="background-color: #eff6ff;">
+            <i class="bi bi-info-circle-fill text-primary"></i>
+            <div class="small text-muted">
+              Upload a clear image or video containing a visible face for optimal biometric alignment.
+            </div>
+          </div>
+
+          <!-- Large Blue Action Button: "Detect Deepfake" -->
+          <div class="text-center">
+            <button type="submit" id="analyzeBtn" class="btn btn-detect-main py-3 fs-5 justify-content-center shadow-lg opacity-50" disabled>
+              <i class="bi bi-search fs-5"></i> Detect Deepfake
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Quick Guidance Cards -->
+      <div class="row g-3 mt-4">
+        <div class="col-md-4">
+          <div class="custom-card p-3 text-center small h-100">
+            <i class="bi bi-image text-primary fs-3 d-block mb-1"></i>
+            <strong>High Resolution Images</strong>
+            <p class="text-muted mb-0" style="font-size: 11px;">Photos with clearly visible faces yield greatest detection accuracy.</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="custom-card p-3 text-center small h-100">
+            <i class="bi bi-camera-video text-primary fs-3 d-block mb-1"></i>
+            <strong>Keyframe Video Extraction</strong>
+            <p class="text-muted mb-0" style="font-size: 11px;">Video clips are sampled across keyframes to detect temporal flickering.</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="custom-card p-3 text-center small h-100">
+            <i class="bi bi-shield-check text-primary fs-3 d-block mb-1"></i>
+            <strong>Secure & Private</strong>
+            <p class="text-muted mb-0" style="font-size: 11px;">Files are processed securely and stored only in your private audit trail.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Animated 5-Stage Processing Overlay Modal -->
+<div class="processing-overlay" id="processingOverlay">
+  <div class="processing-card">
+    <div class="spinner-ai-glow"></div>
+    <h4 class="fw-bold mb-1">Analyzing Media...</h4>
+    <p class="text-muted small mb-4">Please wait while our AI forensics pipeline inspects biometric features.</p>
+
+    <div class="text-start">
+      <div class="processing-step active" id="step-upload">
+        <span class="step-status"><span class="spinner-border spinner-border-sm text-primary"></span></span>
+        <span>Uploading media stream</span>
+      </div>
+
+      <div class="processing-step" id="step-preprocess">
+        <span class="step-status"><i class="bi bi-circle text-muted"></i></span>
+        <span>Preprocessing & normalizing frames</span>
+      </div>
+
+      <div class="processing-step" id="step-face">
+        <span class="step-status"><i class="bi bi-circle text-muted"></i></span>
+        <span>Detecting & cropping facial region</span>
+      </div>
+
+      <div class="processing-step" id="step-ai">
+        <span class="step-status"><i class="bi bi-circle text-muted"></i></span>
+        <span>Running CNN & Fourier frequency check</span>
+      </div>
+
+      <div class="processing-step" id="step-result">
+        <span class="step-status"><i class="bi bi-circle text-muted"></i></span>
+        <span>Generating verified classification result</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
